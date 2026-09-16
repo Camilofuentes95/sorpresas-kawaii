@@ -334,3 +334,193 @@ def enviar_correo_actualizacion_pedido(pedido, estado_anterior=None, info_rastre
         return True
     except Exception:
         return False
+
+
+def _obtener_destinatarios_admin():
+    """Obtiene la lista de correos electrónicos de administradores configurados."""
+    destinatarios = []
+    admin_email_conf = getattr(settings, 'ADMIN_EMAIL', None)
+    
+    if admin_email_conf:
+        if isinstance(admin_email_conf, (list, tuple)):
+            destinatarios.extend([e.strip() for e in admin_email_conf if e and e.strip()])
+        elif isinstance(admin_email_conf, str):
+            destinatarios.extend([e.strip() for e in admin_email_conf.split(',') if e.strip()])
+
+    if not destinatarios:
+        try:
+            from django.contrib.auth.models import User
+            staff_emails = list(
+                User.objects.filter(is_staff=True)
+                .exclude(email__isnull=True)
+                .exclude(email='')
+                .values_list('email', flat=True)
+            )
+            destinatarios.extend(staff_emails)
+        except Exception:
+            pass
+
+    if not destinatarios and getattr(settings, 'DEFAULT_FROM_EMAIL', None):
+        destinatarios.append(settings.DEFAULT_FROM_EMAIL)
+
+    # Eliminar duplicados preservando orden
+    return list(dict.fromkeys([d for d in destinatarios if d]))
+
+
+def enviar_correo_nuevo_pedido_administrador(pedido):
+    """
+    Envía una notificación detallada por correo al administrador de la tienda
+    cuando un cliente realiza un nuevo pedido para su revisión y confirmación.
+    """
+    destinatarios = _obtener_destinatarios_admin()
+    if not destinatarios:
+        return False
+
+    cliente = pedido.id_usuario
+    fecha_pedido_str = pedido.fecha_pedido.strftime("%d/%m/%Y %I:%M %p") if hasattr(pedido, 'fecha_pedido') and pedido.fecha_pedido else "Reciente"
+    
+    items_texto = _obtener_items_pedido_texto(pedido)
+    items_html = _obtener_items_pedido_html(pedido)
+
+    asunto = f"🔔 [Nuevo Pedido {pedido.codigo_pedido}] {cliente.username} - ${pedido.valor_pagado:,.0f} COP"
+
+    mensaje_plano = (
+        f"¡Hola Administrador!\n\n"
+        f"Se ha registrado un nuevo pedido en Sorpresas Kawaii y requiere tu atención:\n\n"
+        f"DATOS DEL PEDIDO:\n"
+        f"--------------------------------------------------\n"
+        f"Código: {pedido.codigo_pedido}\n"
+        f"Fecha: {fecha_pedido_str}\n"
+        f"Estado actual: {pedido.get_estado_display()}\n"
+        f"Método de pago: {pedido.metodo_pago or 'No especificado'}\n"
+        f"Total: ${pedido.valor_pagado:,.0f} COP\n"
+        f"--------------------------------------------------\n\n"
+        f"DATOS DEL CLIENTE:\n"
+        f"--------------------------------------------------\n"
+        f"Usuario: {cliente.username}\n"
+        f"--------------------------------------------------\n\n"
+        f"ARTÍCULOS SOLICITADOS:\n"
+        f"{items_texto}\n\n"
+        f"Para gestionar este pedido, ingresa al panel de administración de Django:\n"
+        f"/admin/sorpresas_kawai/pedido/{pedido.id}/change/\n\n"
+        f"Sorpresas Kawaii - Sistema de Notificaciones"
+    )
+
+    cuerpo_html = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Pedido Recibido</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f6f2f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f6f2f9; padding: 30px 10px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 30px rgba(140, 82, 255, 0.12); border: 1px solid #ebd9f7; max-width: 600px; width: 100%;">
+                    <!-- Header Notificación Admin -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #8c52ff 0%, #e94fa3 100%); padding: 28px 24px; text-align: center;">
+                            <span style="display: inline-block; background-color: rgba(255,255,255,0.2); color: #ffffff; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 4px 12px; border-radius: 20px; margin-bottom: 8px;">
+                                👑 Alerta de Administración
+                            </span>
+                            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">
+                                ¡Nuevo Pedido Recibido! 🛍️
+                            </h1>
+                            <p style="color: #f7e8ff; margin: 6px 0 0 0; font-size: 14px; font-weight: 500;">
+                                Código de Pedido: <strong>{pedido.codigo_pedido}</strong>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Contenido Principal -->
+                    <tr>
+                        <td style="padding: 32px 28px;">
+                            <p style="color: #4a3e4e; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0;">
+                                Se ha generado un nuevo pedido en la tienda web. A continuación tienes los detalles completos para su revisión y confirmación:
+                            </p>
+
+                            <!-- Ficha de Datos del Cliente -->
+                            <div style="background-color: #fcf8ff; border: 1px solid #ebd9f7; border-left: 4px solid #8c52ff; border-radius: 10px; padding: 16px 20px; margin-bottom: 24px;">
+                                <h3 style="color: #6a2ec8; margin: 0 0 12px 0; font-size: 15px; font-weight: 700;">
+                                    👤 Datos del Cliente
+                                </h3>
+                                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size: 14px; color: #3a2e3f;">
+                                    <tr>
+                                        <td style="padding: 4px 0; color: #7f6e86; width: 35%;">Usuario:</td>
+                                        <td style="padding: 4px 0; font-weight: 600;">{cliente.username}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 4px 0; color: #7f6e86;">Fecha:</td>
+                                        <td style="padding: 4px 0;">{fecha_pedido_str}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 4px 0; color: #7f6e86;">Método de Pago:</td>
+                                        <td style="padding: 4px 0; font-weight: 600; color: #2d2030;">{pedido.metodo_pago or 'No especificado'}</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <!-- Tabla de Artículos -->
+                            <h3 style="color: #2d2030; font-size: 16px; margin: 24px 0 12px 0; border-bottom: 2px solid #ebd9f7; padding-bottom: 8px;">
+                                📦 Artículos del Pedido
+                            </h3>
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; margin-bottom: 20px;">
+                                <thead>
+                                    <tr style="background-color: #f7effd;">
+                                        <th align="left" style="padding: 8px 12px; font-size: 12px; color: #6f5880; text-transform: uppercase;">Producto</th>
+                                        <th align="center" style="padding: 8px 12px; font-size: 12px; color: #6f5880; text-transform: uppercase;">Cant.</th>
+                                        <th align="right" style="padding: 8px 12px; font-size: 12px; color: #6f5880; text-transform: uppercase;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {items_html}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="2" style="padding: 14px 12px; font-size: 16px; font-weight: bold; color: #2d2030; border-top: 2px solid #8c52ff;">Total del Pedido:</td>
+                                        <td align="right" style="padding: 14px 12px; font-size: 18px; font-weight: 800; color: #8c52ff; border-top: 2px solid #8c52ff;">${pedido.valor_pagado:,.0f} COP</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+
+                            <!-- Botón de Gestión en Django Admin -->
+                            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ebd9f7;">
+                                <p style="color: #6f5880; font-size: 13px; margin: 0 0 15px 0;">
+                                    Haz clic a continuación para revisar el pedido, confirmar el pago o asignar la guía de despacho:
+                                </p>
+                                <a href="/admin/sorpresas_kawai/pedido/{pedido.id}/change/" style="display: inline-block; background: linear-gradient(135deg, #8c52ff 0%, #e94fa3 100%); color: #ffffff; text-decoration: none; font-weight: bold; font-size: 14px; padding: 12px 26px; border-radius: 50px; box-shadow: 0 4px 14px rgba(140, 82, 255, 0.35);">
+                                    ⚙️ Gestionar Pedido en el Panel Admin
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f7effd; padding: 18px; text-align: center; border-top: 1px solid #ebd9f7;">
+                            <p style="color: #9a88a8; font-size: 12px; margin: 0;">
+                                Panel de Control de Sorpresas Kawaii • Notificación Interna Automática
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>"""
+
+    try:
+        send_mail(
+            subject=asunto,
+            message=mensaje_plano,
+            html_message=cuerpo_html,
+            from_email=settings.DEFAULT_FROM_EMAIL or 'noreply@sorpresaskawaii.com',
+            recipient_list=destinatarios,
+            fail_silently=True,
+        )
+        return True
+    except Exception:
+        return False
+

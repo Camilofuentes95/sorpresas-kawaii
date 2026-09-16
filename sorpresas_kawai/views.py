@@ -377,7 +377,7 @@ def finalizar_compra(request):
                     id_usuario=request.user,
                     valor_pagado=valor_total_pagado,
                     estado='PENDIENTE',
-                    metodo_pago='Efectivo/Prueba',
+                    metodo_pago='Coordinar por WhatsApp',
                 )
                 items_comprados_info = []
                 for item in items_carrito:
@@ -396,10 +396,14 @@ def finalizar_compra(request):
 
                 items_carrito.delete()
 
-                # Enviar correo kawaii de confirmación de compra
+                # Enviar correos: confirmación al cliente y notificación al administrador
                 try:
-                    from .emails import enviar_correo_confirmacion_compra
+                    from .emails import (
+                        enviar_correo_confirmacion_compra,
+                        enviar_correo_nuevo_pedido_administrador
+                    )
                     enviar_correo_confirmacion_compra(nuevo_pedido)
+                    enviar_correo_nuevo_pedido_administrador(nuevo_pedido)
                 except Exception:
                     pass
 

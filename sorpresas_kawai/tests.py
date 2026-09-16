@@ -221,4 +221,46 @@ class OrderNotificationAndWhatsAppTests(TestCase):
         data = carrito_context(request)
         self.assertEqual(data.get('carrito_total_items'), 5)
 
+    def test_notificacion_correo_nuevo_pedido_administrador(self):
+        """Valida que la función enviar_correo_nuevo_pedido_administrador envíe los datos del pedido al admin."""
+        from .emails import enviar_correo_nuevo_pedido_administrador
+        from django.test import override_settings
+
+        self.mail.outbox = []
+        with override_settings(ADMIN_EMAIL='admin_tienda@ejemplo.com'):
+            resultado = enviar_correo_nuevo_pedido_administrador(self.pedido)
+
+        self.assertTrue(resultado)
+        self.assertEqual(len(self.mail.outbox), 1)
+        email_admin = self.mail.outbox[0]
+        self.assertEqual(email_admin.to, ['admin_tienda@ejemplo.com'])
+        self.assertIn("Nuevo Pedido", email_admin.subject)
+        self.assertIn(self.pedido.codigo_pedido, email_admin.subject)
+        self.assertIn("kawaii_buyer@ejemplo.com", email_admin.body)
+        self.assertIn("Peluche Kuromi", email_admin.body)
+        self.assertIn("Combo Pastel", email_admin.body)
+        self.assertIn("85,000", email_admin.body)
+
+    def test_finalizar_compra_envia_correo_a_cliente_y_admin(self):
+        """Valida que al finalizar una compra se despachen correos tanto al cliente como al administrador."""
+        from django.test import override_settings
+
+        client = Client()
+        client.force_login(self.user)
+
+        carrito, _ = CarritoDeCompras.objects.get_or_create(usuario=self.user)
+        ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=1)
+
+        self.mail.outbox = []
+        with override_settings(ADMIN_EMAIL='admin_alertas@ejemplo.com'):
+            response = client.post(reverse('finalizar_compra'))
+
+        self.assertEqual(response.status_code, 302)
+        # Debe haber enviado 2 correos: 1 al cliente y 1 al administrador
+        self.assertEqual(len(self.mail.outbox), 2)
+        destinatarios_enviados = [msg.to[0] for msg in self.mail.outbox]
+        self.assertIn('kawaii_buyer@ejemplo.com', destinatarios_enviados)
+        self.assertIn('admin_alertas@ejemplo.com', destinatarios_enviados)
+
+
 
