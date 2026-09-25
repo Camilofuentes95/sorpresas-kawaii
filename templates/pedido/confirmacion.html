@@ -5,388 +5,394 @@
 
 {% block extra_head %}
 <style>
-.confirmacion-container {
-    max-width: 720px;
-    margin: 40px auto 70px auto;
-    padding: 0 16px;
-}
-
-.confirmacion-card {
-    background: #ffffff;
-    border-radius: 24px;
-    box-shadow: 0 10px 30px rgba(233, 79, 163, 0.12);
-    border: 1.5px solid #fae6f2;
-    padding: 36px 28px;
-    position: relative;
-    overflow: hidden;
-}
-
-.confirmacion-icon-wrapper {
-    text-align: center;
-    margin-bottom: 24px;
-}
-
-.confirmacion-sparkles {
-    font-size: 3rem;
-    margin-bottom: 10px;
-    animation: gentlePulse 2s infinite ease-in-out;
-}
-
-.confirmacion-title {
-    font-size: 1.9rem;
-    font-weight: 800;
-    color: #2d2030;
-    margin: 0 0 8px 0;
-    letter-spacing: -0.5px;
-}
-
-.confirmacion-subtitle {
-    color: #6f6273;
-    font-size: 1.05rem;
-    line-height: 1.5;
-    margin: 0;
-}
-
-.order-highlight {
-    color: #e94fa3;
-    background-color: #fff0f7;
-    padding: 3px 12px;
-    border-radius: 9999px;
-    border: 1px solid #f8b4d9;
-    font-weight: 800;
-}
-
-/* Caja de WhatsApp de Alto Impacto */
-.whatsapp-checkout-box {
-    background: linear-gradient(145deg, #f0fdf4 0%, #e6f9ed 100%);
-    border: 2px solid #86efac;
-    border-radius: 18px;
-    padding: 26px 20px;
-    text-align: center;
-    margin-bottom: 28px;
-    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.1);
-}
-
-.whatsapp-badge-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background-color: #059669;
-    color: #ffffff;
-    font-size: 0.78rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    padding: 4px 12px;
-    border-radius: 9999px;
-    margin-bottom: 10px;
-}
-
-.whatsapp-box-title {
-    font-size: 1.3rem;
-    font-weight: 800;
-    color: #065f46;
-    margin: 0 0 8px 0;
-}
-
-.whatsapp-box-desc {
-    color: #047857;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    max-width: 560px;
-    margin: 0 auto 20px auto;
-}
-
-.btn-whatsapp-confirmar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
-    color: #ffffff !important;
-    text-decoration: none;
-    font-size: 1.1rem;
-    font-weight: 800;
-    padding: 15px 32px;
-    border-radius: 9999px;
-    box-shadow: 0 8px 22px rgba(37, 211, 102, 0.38);
-    transition: all 0.28s ease;
-    cursor: pointer;
-}
-
-.btn-whatsapp-confirmar:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 12px 28px rgba(37, 211, 102, 0.48);
-    background: linear-gradient(135deg, #2ae06c 0%, #169b8c 100%);
-}
-
-.whatsapp-icon-main {
-    font-size: 1.5rem;
-}
-
-.whatsapp-icon-ext {
-    font-size: 0.85rem;
-    opacity: 0.85;
-}
-
-.whatsapp-help-note {
-    margin-top: 14px;
-    font-size: 0.86rem;
-    color: #059669;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-weight: 600;
-}
-
-/* Pasos */
-.steps-progress-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 28px;
-}
-
-.step-card {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px;
-    border-radius: 12px;
-    background: #faf7fb;
-    border: 1px solid #fae6f2;
-}
-
-.step-card.completed {
-    background: #f0fdf4;
-    border-color: #bbf7d0;
-}
-
-.step-card.completed .step-num {
-    background-color: #10b981;
-    color: #ffffff;
-}
-
-.step-card.current {
-    background: #fff0f7;
-    border-color: #f8b4d9;
-}
-
-.step-card.current .step-num {
-    background: linear-gradient(135deg, #ff70af 0%, #e94fa3 100%);
-    color: #ffffff;
-}
-
-.step-num {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 0.85rem;
-    background-color: #e5e7eb;
-    color: #6b7280;
-    flex-shrink: 0;
-}
-
-.step-text {
-    display: flex;
-    flex-direction: column;
-}
-
-.step-text strong {
-    font-size: 0.84rem;
-    color: #2d2030;
-}
-
-.step-text span {
-    font-size: 0.74rem;
-    color: #6f6273;
-}
-
-/* Resumen Artículos */
-.resumen-pedido-card {
-    background: #faf8fb;
-    border: 1px solid #fae6f2;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 28px;
-}
-
-.resumen-card-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #2d2030;
-    margin: 0 0 16px 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.pedido-items-box {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 16px;
-}
-
-.confirm-item-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px dashed #fae6f2;
-}
-
-.confirm-item-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.confirm-item-img {
-    width: 54px !important;
-    height: 54px !important;
-    max-width: 54px !important;
-    max-height: 54px !important;
-    object-fit: cover !important;
-    border-radius: 8px;
-    border: 1px solid #fae6f2;
-    background: #ffffff;
-    flex-shrink: 0;
-}
-
-.confirm-item-name {
-    font-weight: 600;
-    font-size: 0.92rem;
-    color: #2d2030;
-}
-
-.badge-combo-sm {
-    font-size: 0.72rem;
-    background-color: #f6f0ff;
-    color: #8c52ff;
-    padding: 2px 8px;
-    border-radius: 9999px;
-    font-weight: 700;
-    margin-left: 4px;
-}
-
-.confirm-item-qty {
-    font-size: 0.82rem;
-    color: #6f6273;
-    margin-top: 2px;
-}
-
-.confirm-item-total {
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: #e94fa3;
-}
-
-.confirm-totals-box {
-    border-top: 2px solid #fae6f2;
-    padding-top: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.confirm-total-line {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.92rem;
-    color: #6f6273;
-}
-
-.confirm-total-line.highlight {
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: #2d2030;
-    padding-top: 4px;
-}
-
-.confirm-total-price {
-    color: #e94fa3;
-    font-size: 1.3rem;
-    font-weight: 800;
-}
-
-/* Botones inferiores */
-.confirmacion-actions {
-    display: flex;
-    justify-content: center;
-    gap: 14px;
-    flex-wrap: wrap;
-}
-
-.btn-secundario-pedidos {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 11px 22px;
-    border-radius: 9999px;
-    font-weight: 700;
-    font-size: 0.92rem;
-    color: #e94fa3;
-    background-color: #fff0f7;
-    border: 1.5px solid #f8b4d9;
-    text-decoration: none;
-    transition: all 0.25s ease;
-}
-
-.btn-secundario-pedidos:hover {
-    background-color: #ffe6f3;
-    transform: translateY(-2px);
-}
-
-.btn-secundario-tienda {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 11px 22px;
-    border-radius: 9999px;
-    font-weight: 700;
-    font-size: 0.92rem;
-    color: #8c52ff;
-    background-color: #f6f0ff;
-    border: 1.5px solid #d8b4fe;
-    text-decoration: none;
-    transition: all 0.25s ease;
-}
-
-.btn-secundario-tienda:hover {
-    background-color: #eddcfc;
-    transform: translateY(-2px);
-}
-
-@media (max-width: 640px) {
-    .confirmacion-card {
-        padding: 24px 16px;
+    .confirmacion-container {
+        max-width: 720px;
+        margin: 40px auto 70px auto;
+        padding: 0 16px;
     }
+
+    .confirmacion-card {
+        background: #ffffff;
+        border-radius: 24px;
+        box-shadow: 0 10px 30px rgba(233, 79, 163, 0.12);
+        border: 1.5px solid #fae6f2;
+        padding: 36px 28px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .confirmacion-icon-wrapper {
+        text-align: center;
+        margin-bottom: 24px;
+    }
+
+    .confirmacion-sparkles {
+        font-size: 3rem;
+        margin-bottom: 10px;
+        animation: gentlePulse 2s infinite ease-in-out;
+    }
+
     .confirmacion-title {
+        font-size: 1.9rem;
+        font-weight: 800;
+        color: #2d2030;
+        margin: 0 0 8px 0;
+        letter-spacing: -0.5px;
+    }
+
+    .confirmacion-subtitle {
+        color: #6f6273;
+        font-size: 1.05rem;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    .order-highlight {
+        color: #e94fa3;
+        background-color: #fff0f7;
+        padding: 3px 12px;
+        border-radius: 9999px;
+        border: 1px solid #f8b4d9;
+        font-weight: 800;
+    }
+
+    /* Caja de WhatsApp de Alto Impacto */
+    .whatsapp-checkout-box {
+        background: linear-gradient(145deg, #f0fdf4 0%, #e6f9ed 100%);
+        border: 2px solid #86efac;
+        border-radius: 18px;
+        padding: 26px 20px;
+        text-align: center;
+        margin-bottom: 28px;
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.1);
+    }
+
+    .whatsapp-badge-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background-color: #059669;
+        color: #ffffff;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        margin-bottom: 10px;
+    }
+
+    .whatsapp-box-title {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #065f46;
+        margin: 0 0 8px 0;
+    }
+
+    .whatsapp-box-desc {
+        color: #047857;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        max-width: 560px;
+        margin: 0 auto 20px auto;
+    }
+
+    .btn-whatsapp-confirmar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+        color: #ffffff !important;
+        text-decoration: none;
+        font-size: 1.1rem;
+        font-weight: 800;
+        padding: 15px 32px;
+        border-radius: 9999px;
+        box-shadow: 0 8px 22px rgba(37, 211, 102, 0.38);
+        transition: all 0.28s ease;
+        cursor: pointer;
+    }
+
+    .btn-whatsapp-confirmar:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 12px 28px rgba(37, 211, 102, 0.48);
+        background: linear-gradient(135deg, #2ae06c 0%, #169b8c 100%);
+    }
+
+    .whatsapp-icon-main {
         font-size: 1.5rem;
     }
-    .btn-whatsapp-confirmar {
-        width: 100%;
-        padding: 14px 18px;
-        font-size: 0.98rem;
+
+    .whatsapp-icon-ext {
+        font-size: 0.85rem;
+        opacity: 0.85;
     }
+
+    .whatsapp-help-note {
+        margin-top: 14px;
+        font-size: 0.86rem;
+        color: #059669;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-weight: 600;
+    }
+
+    /* Pasos */
     .steps-progress-grid {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 28px;
     }
-    .confirmacion-actions {
+
+    .step-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        border-radius: 12px;
+        background: #faf7fb;
+        border: 1px solid #fae6f2;
+    }
+
+    .step-card.completed {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+    }
+
+    .step-card.completed .step-num {
+        background-color: #10b981;
+        color: #ffffff;
+    }
+
+    .step-card.current {
+        background: #fff0f7;
+        border-color: #f8b4d9;
+    }
+
+    .step-card.current .step-num {
+        background: linear-gradient(135deg, #ff70af 0%, #e94fa3 100%);
+        color: #ffffff;
+    }
+
+    .step-num {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 0.85rem;
+        background-color: #e5e7eb;
+        color: #6b7280;
+        flex-shrink: 0;
+    }
+
+    .step-text {
+        display: flex;
         flex-direction: column;
     }
-    .btn-secundario-pedidos, .btn-secundario-tienda {
-        width: 100%;
-        justify-content: center;
+
+    .step-text strong {
+        font-size: 0.84rem;
+        color: #2d2030;
     }
-}
+
+    .step-text span {
+        font-size: 0.74rem;
+        color: #6f6273;
+    }
+
+    /* Resumen Artículos */
+    .resumen-pedido-card {
+        background: #faf8fb;
+        border: 1px solid #fae6f2;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 28px;
+    }
+
+    .resumen-card-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #2d2030;
+        margin: 0 0 16px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .pedido-items-box {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .confirm-item-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px dashed #fae6f2;
+    }
+
+    .confirm-item-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .confirm-item-img {
+        width: 54px !important;
+        height: 54px !important;
+        max-width: 54px !important;
+        max-height: 54px !important;
+        object-fit: cover !important;
+        border-radius: 8px;
+        border: 1px solid #fae6f2;
+        background: #ffffff;
+        flex-shrink: 0;
+    }
+
+    .confirm-item-name {
+        font-weight: 600;
+        font-size: 0.92rem;
+        color: #2d2030;
+    }
+
+    .badge-combo-sm {
+        font-size: 0.72rem;
+        background-color: #f6f0ff;
+        color: #8c52ff;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        font-weight: 700;
+        margin-left: 4px;
+    }
+
+    .confirm-item-qty {
+        font-size: 0.82rem;
+        color: #6f6273;
+        margin-top: 2px;
+    }
+
+    .confirm-item-total {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #e94fa3;
+    }
+
+    .confirm-totals-box {
+        border-top: 2px solid #fae6f2;
+        padding-top: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .confirm-total-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.92rem;
+        color: #6f6273;
+    }
+
+    .confirm-total-line.highlight {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #2d2030;
+        padding-top: 4px;
+    }
+
+    .confirm-total-price {
+        color: #e94fa3;
+        font-size: 1.3rem;
+        font-weight: 800;
+    }
+
+    /* Botones inferiores */
+    .confirmacion-actions {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    .btn-secundario-pedidos {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 22px;
+        border-radius: 9999px;
+        font-weight: 700;
+        font-size: 0.92rem;
+        color: #e94fa3;
+        background-color: #fff0f7;
+        border: 1.5px solid #f8b4d9;
+        text-decoration: none;
+        transition: all 0.25s ease;
+    }
+
+    .btn-secundario-pedidos:hover {
+        background-color: #ffe6f3;
+        transform: translateY(-2px);
+    }
+
+    .btn-secundario-tienda {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 22px;
+        border-radius: 9999px;
+        font-weight: 700;
+        font-size: 0.92rem;
+        color: #8c52ff;
+        background-color: #f6f0ff;
+        border: 1.5px solid #d8b4fe;
+        text-decoration: none;
+        transition: all 0.25s ease;
+    }
+
+    .btn-secundario-tienda:hover {
+        background-color: #eddcfc;
+        transform: translateY(-2px);
+    }
+
+    @media (max-width: 640px) {
+        .confirmacion-card {
+            padding: 24px 16px;
+        }
+
+        .confirmacion-title {
+            font-size: 1.5rem;
+        }
+
+        .btn-whatsapp-confirmar {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 0.98rem;
+        }
+
+        .steps-progress-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .confirmacion-actions {
+            flex-direction: column;
+        }
+
+        .btn-secundario-pedidos,
+        .btn-secundario-tienda {
+            width: 100%;
+            justify-content: center;
+        }
+    }
 </style>
 {% endblock extra_head %}
 
@@ -395,10 +401,13 @@
     <div class="confirmacion-card">
         <!-- Icono y Título Principal -->
         <div class="confirmacion-icon-wrapper">
-            <div class="confirmacion-sparkles">✨🛍️✨</div>
+            <div style="margin-bottom: 12px;">
+                <img src="{% static 'img/logo_edukit_sorpresas_kawaii.png' %}" alt="Edukit · Sorpresas Kawaii" style="max-height: 80px; width: auto; filter: drop-shadow(0 4px 12px rgba(233,79,163,0.18));">
+            </div>
             <h1 class="confirmacion-title">¡Gracias por tu compra!</h1>
             <p class="confirmacion-subtitle">
-                Tu pedido con código <strong class="order-highlight">{{ pedido.codigo_pedido }}</strong> ha sido registrado con éxito.
+                Tu pedido con código <strong class="order-highlight">{{ pedido.codigo_pedido }}</strong> ha sido
+                registrado con éxito.
             </p>
         </div>
 
@@ -409,18 +418,19 @@
             </div>
             <h2 class="whatsapp-box-title">Coordina y Finaliza tu Compra por WhatsApp</h2>
             <p class="whatsapp-box-desc">
-                Haz clic en el botón a continuación para enviarnos el resumen de tu pedido al 
-                <strong>+57 322 238 5508</strong> y coordinar tu pago o enviar tu comprobante de transferencia.
+                Haz clic en el botón a continuación para enviarnos el resumen de tu pedido por WhatsApp y coordinar tu pago o enviar tu comprobante de transferencia.
             </p>
 
-            <a href="{{ pedido.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp-confirmar" id="btnWhatsAppConfirmar">
+            <a href="{{ pedido.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp-confirmar"
+                id="btnWhatsAppConfirmar">
                 <i class="fa-brands fa-whatsapp whatsapp-icon-main"></i>
                 <span>Confirmar Pedido por WhatsApp</span>
                 <i class="fa-solid fa-arrow-up-right-from-square whatsapp-icon-ext"></i>
             </a>
 
             <div class="whatsapp-help-note">
-                <i class="fa-solid fa-circle-check"></i> El mensaje ya incluye automáticamente los artículos de tu orden.
+                <i class="fa-solid fa-circle-check"></i> El mensaje ya incluye automáticamente los artículos de tu
+                orden.
             </div>
         </div>
 
@@ -460,21 +470,29 @@
                 <div class="confirm-item-row">
                     <div class="confirm-item-info">
                         {% if detalle.producto and detalle.producto.get_imagen_url %}
-                            <img class="confirm-item-img" style="width:54px; height:54px; object-fit:cover; border-radius:8px;" src="{{ detalle.producto.get_imagen_url }}" alt="{{ detalle.producto.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                        <img class="confirm-item-img"
+                            style="width:54px; height:54px; object-fit:cover; border-radius:8px;"
+                            src="{{ detalle.producto.get_imagen_url }}" alt="{{ detalle.producto.nombre }}"
+                            onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
                         {% elif detalle.combo and detalle.combo.get_imagen_url %}
-                            <img class="confirm-item-img" style="width:54px; height:54px; object-fit:cover; border-radius:8px;" src="{{ detalle.combo.get_imagen_url }}" alt="{{ detalle.combo.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                        <img class="confirm-item-img"
+                            style="width:54px; height:54px; object-fit:cover; border-radius:8px;"
+                            src="{{ detalle.combo.get_imagen_url }}" alt="{{ detalle.combo.nombre }}"
+                            onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
                         {% else %}
-                            <img class="confirm-item-img" style="width:54px; height:54px; object-fit:cover; border-radius:8px;" src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+                        <img class="confirm-item-img"
+                            style="width:54px; height:54px; object-fit:cover; border-radius:8px;"
+                            src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
                         {% endif %}
 
                         <div>
                             <div class="confirm-item-name">
                                 {% if detalle.producto %}
-                                    {{ detalle.producto.nombre }}
+                                {{ detalle.producto.nombre }}
                                 {% elif detalle.combo %}
-                                    {{ detalle.combo.nombre }} <span class="badge-combo-sm">Combo</span>
+                                {{ detalle.combo.nombre }} <span class="badge-combo-sm">Combo</span>
                                 {% else %}
-                                    Ítem
+                                Ítem
                                 {% endif %}
                             </div>
                             <div class="confirm-item-qty">

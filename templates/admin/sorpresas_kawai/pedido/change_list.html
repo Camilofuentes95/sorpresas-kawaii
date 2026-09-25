@@ -1,0 +1,16 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static %}
+
+{% block object-tools-items %}
+    <li>
+        <a href="{% url 'admin_metricas_ventas' %}" class="viewsitelink">
+            Métricas de Ventas
+        </a>
+    </li>
+    <li>
+        <a href="{% url 'admin_exportar_excel' %}?rango=todo&estado=TODOS" class="viewsitelink">
+            Exportar Excel (.xlsx)
+        </a>
+    </li>
+    {{ block.super }}
+{% endblock %}

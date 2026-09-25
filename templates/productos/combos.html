@@ -6,7 +6,23 @@
 
 {% block content %}
 <div class="catalog-container">
-    {% if combos %}
+    {% if not modulo_habilitado %}
+    <div style="max-width: 650px; margin: 50px auto; background: #ffffff; border: 2px dashed #8c52ff; border-radius: 24px; padding: 40px 30px; text-align: center; box-shadow: 0 10px 30px rgba(140, 82, 255, 0.12);">
+        <div style="font-size: 3.5rem; margin-bottom: 15px; animation: pulse 2s infinite;">🍱✨</div>
+        <h1 style="color: #6a2ec8; font-size: 1.8rem; margin-bottom: 12px; font-weight: 800;">Sección Combos en Mantenimiento</h1>
+        <p style="color: #666; font-size: 1.05rem; line-height: 1.6; margin-bottom: 25px;">
+            {{ mensaje_mantenimiento|default:"¡Estamos renovando nuestras combinaciones y combos especiales! Vuelve a consultarlos pronto."|linebreaksbr }}
+        </p>
+        <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+            <a href="{% url 'lista_productos' %}" class="btn-productos" style="background: linear-gradient(135deg, #8c52ff 0%, #e94fa3 100%); color: white; padding: 12px 24px; border-radius: 50px; text-decoration: none; font-weight: bold; display: inline-block;">
+                <i class="fa-solid fa-store"></i> Ver Productos Disponibles
+            </a>
+            <a href="{% url 'inicio' %}" style="background: #f7effd; color: #6a2ec8; padding: 12px 24px; border-radius: 50px; text-decoration: none; font-weight: bold; display: inline-block;">
+                <i class="fa-solid fa-home"></i> Volver al Inicio
+            </a>
+        </div>
+    </div>
+    {% elif combos %}
     <div class="catalog-header">
         <h1>{{ titulo }}</h1>
     </div>
@@ -19,6 +35,10 @@
                     <img src="{{ combo.get_imagen_url }}" alt="{{ combo.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
                 {% else %}
                     <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+                {% endif %}
+
+                {% if combo.es_nuevo %}
+                    <span class="badge-nuevo"><i class="fa-solid fa-sparkles"></i> Nuevo</span>
                 {% endif %}
 
                 {% if combo.descuento_porcentaje > 0 %}
@@ -80,6 +100,32 @@
         </div>
         {% endfor %}
     </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="kawaii-pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="page-pill-btn prev-btn">
+                <i class="fa-solid fa-angle-left"></i> Anterior
+            </a>
+        {% endif %}
+
+        <div class="page-numbers-group">
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="page-num-pill active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}" class="page-num-pill">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="page-pill-btn next-btn">
+                Siguiente <i class="fa-solid fa-angle-right"></i>
+            </a>
+        {% endif %}
+    </div>
+    {% endif %}
     {% else %}
     <section class="empty-catalog">
         <h1>Combos Disponibles</h1>

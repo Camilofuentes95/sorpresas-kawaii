@@ -1,11 +1,48 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <linearGradient id="pink" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f8b9d8"/>
-      <stop offset="1" stop-color="#e94fa3"/>
+    <linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff580"/>
+      <stop offset="100%" stop-color="#fed636"/>
+    </linearGradient>
+    <linearGradient id="eraserGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff9ec5"/>
+      <stop offset="100%" stop-color="#e94fa3"/>
+    </linearGradient>
+    <linearGradient id="ferruleGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#b6e0fe"/>
+      <stop offset="100%" stop-color="#80c2f8"/>
     </linearGradient>
   </defs>
-  <path d="M16 50c-7 0-12-5-12-12 0-6 5-11 11-12 2-8 9-13 18-13 9 0 17 6 19 15 5 1 9 6 9 11 0 7-5 11-12 11H16z" fill="url(#pink)"/>
-  <path d="M16 50c-7 0-12-5-12-12 0-6 5-11 11-12 2-8 9-13 18-13 9 0 17 6 19 15 5 1 9 6 9 11 0 7-5 11-12 11H16z" fill="none" stroke="#e94fa3" stroke-width="2"/>
-  <text x="33" y="42" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="#fff">SK</text>
+
+  <!-- Lápiz Kawaii Rotado 22deg -->
+  <g transform="rotate(22 50 50)">
+    <!-- Borrador Rosa -->
+    <path d="M35,22 Q50,6 65,22 L65,30 L35,30 Z" fill="url(#eraserGrad)" stroke="#221426" stroke-width="4" stroke-linejoin="round"/>
+    
+    <!-- Anillo / Virola Celeste -->
+    <rect x="35" y="30" width="30" height="9" rx="2" fill="url(#ferruleGrad)" stroke="#221426" stroke-width="4"/>
+    
+    <!-- Cuerpo Amarillo del Lápiz -->
+    <rect x="35" y="39" width="30" height="34" fill="url(#bodyGrad)" stroke="#221426" stroke-width="4"/>
+    <line x1="45" y1="39" x2="45" y2="73" stroke="#eab308" stroke-width="2.5"/>
+    <line x1="55" y1="39" x2="55" y2="73" stroke="#eab308" stroke-width="2.5"/>
+
+    <!-- Carita Kawaii -->
+    <circle cx="44" cy="53" r="2.2" fill="#221426"/>
+    <circle cx="56" cy="53" r="2.2" fill="#221426"/>
+    <ellipse cx="40" cy="57" rx="2.5" ry="1.5" fill="#ff70af" opacity="0.8"/>
+    <ellipse cx="60" cy="57" rx="2.5" ry="1.5" fill="#ff70af" opacity="0.8"/>
+    <path d="M47,58 Q50,62 53,58" fill="none" stroke="#221426" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- Punta de Madera -->
+    <polygon points="35,73 65,73 50,94" fill="#fde68a" stroke="#221426" stroke-width="4" stroke-linejoin="round"/>
+    <!-- Mina de Grafito -->
+    <polygon points="44,85 56,85 50,94" fill="#221426"/>
+  </g>
+
+  <!-- Estrellitas y Destellos Kawaii -->
+  <path d="M82,18 L84,24 L90,26 L84,28 L82,34 L80,28 L74,26 L80,24 Z" fill="#fed636"/>
+  <path d="M16,68 L17.5,72.5 L22,74 L17.5,75.5 L16,80 L14.5,75.5 L10,74 L14.5,72.5 Z" fill="#ff9ec5"/>
+  <circle cx="18" cy="28" r="3.5" fill="#a7f3d0"/>
+  <circle cx="86" cy="74" r="3" fill="#c4b5fd"/>
 </svg>

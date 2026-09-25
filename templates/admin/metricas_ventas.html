@@ -1,0 +1,738 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Métricas de Ventas y Reportes | Administración de Django{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<!-- Chart.js para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<style>
+    /* Estilos estándar integrados con Django Admin */
+    .dashboard-container {
+        padding: 20px 0;
+    }
+
+    .dashboard-header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color, #e2e8f0);
+    }
+
+    .dashboard-header h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 600;
+        color: var(--body-fg, #333);
+    }
+
+    .dashboard-subtitle {
+        color: var(--body-quiet-color, #666);
+        font-size: 13px;
+        margin: 5px 0 0 0;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-action-primary {
+        background-color: var(--primary, #417690);
+        color: #ffffff !important;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 4px;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-action-primary:hover {
+        background-color: var(--primary-dark, #2b5166);
+    }
+
+    .btn-action-excel {
+        background-color: #107c41;
+        color: #ffffff !important;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 4px;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-action-excel:hover {
+        background-color: #0b5c30;
+    }
+
+    .btn-action-secondary {
+        background-color: var(--body-bg, #ffffff);
+        color: var(--body-fg, #333) !important;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 4px;
+        border: 1px solid var(--border-color, #ccc);
+        text-decoration: none !important;
+    }
+
+    .btn-action-secondary:hover {
+        background-color: var(--hairline-color, #f5f5f5);
+    }
+
+    /* Barra de Filtros */
+    .filter-box {
+        background: var(--darkened-bg, #f8f8f8);
+        border: 1px solid var(--border-color, #ddd);
+        border-radius: 4px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: flex-end;
+    }
+
+    .filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .filter-field label {
+        font-size: 12px;
+        font-weight: bold;
+        color: var(--body-fg, #333);
+        text-transform: uppercase;
+    }
+
+    .filter-field select,
+    .filter-field input {
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 13px;
+        background: #fff;
+    }
+
+    /* Rejilla de KPIs */
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .kpi-box {
+        background: #ffffff;
+        border: 1px solid var(--border-color, #ddd);
+        border-radius: 4px;
+        padding: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .kpi-title {
+        font-size: 12px;
+        font-weight: bold;
+        color: var(--body-quiet-color, #666);
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+
+    .kpi-number {
+        font-size: 22px;
+        font-weight: bold;
+        color: var(--primary, #417690);
+        margin-bottom: 4px;
+    }
+
+    .kpi-desc {
+        font-size: 11px;
+        color: var(--body-quiet-color, #888);
+    }
+
+    /* Gráficos */
+    .charts-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    @media (max-width: 900px) {
+        .charts-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .chart-box {
+        background: #ffffff;
+        border: 1px solid var(--border-color, #ddd);
+        border-radius: 4px;
+        padding: 15px;
+    }
+
+    .chart-box h3 {
+        margin: 0 0 12px 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--body-fg, #333);
+        border-bottom: 1px solid #eee;
+        padding-bottom: 8px;
+    }
+
+    .chart-wrap {
+        position: relative;
+        height: 250px;
+        width: 100%;
+    }
+
+    /* Tablas estilo Django Admin */
+    .tables-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    @media (max-width: 900px) {
+        .tables-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .admin-card {
+        background: #ffffff;
+        border: 1px solid var(--border-color, #ddd);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .admin-card-header {
+        background: var(--primary, #417690);
+        color: #ffffff;
+        padding: 10px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .admin-card-header h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #ffffff;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    table.admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    table.admin-table th {
+        background: var(--darkened-bg, #f8f8f8);
+        color: var(--body-fg, #333);
+        padding: 8px 12px;
+        border-bottom: 1px solid #ddd;
+        text-align: left;
+        font-weight: 600;
+        font-size: 12px;
+    }
+
+    table.admin-table td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #eee;
+        vertical-align: middle;
+    }
+
+    table.admin-table tr:hover {
+        background-color: #f9f9f9;
+    }
+
+    .status-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 11px;
+        font-weight: bold;
+    }
+
+    .tag-pagado { background: #d4edda; color: #155724; }
+    .tag-enviado { background: #d1ecf1; color: #0c5460; }
+    .tag-entregado { background: #e2e3e5; color: #383d41; }
+    .tag-pendiente { background: #fff3cd; color: #856404; }
+    .tag-cancelado { background: #f8d7da; color: #721c24; }
+    .tag-alert-crit { background: #f8d7da; color: #721c24; font-weight: bold; }
+    .tag-alert-low { background: #fff3cd; color: #856404; }
+    .tag-alert-ok { background: #d4edda; color: #155724; }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Inicio</a>
+    &rsaquo; <a href="{% url 'admin:sorpresas_kawai_pedido_changelist' %}">Pedidos</a>
+    &rsaquo; Métricas y Reportes de Ventas
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+
+    {% if messages %}
+    <div style="margin-bottom: 15px;">
+        {% for message in messages %}
+        <div style="padding: 10px 14px; border-radius: 4px; margin-bottom: 6px; font-size: 13px; font-weight: 600; {% if message.tags == 'success' %}background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;{% elif message.tags == 'warning' %}background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;{% else %}background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb;{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Encabezado Estándar -->
+    <div class="dashboard-header">
+        <div>
+            <h1>Métricas y Reportes de Ventas</h1>
+            <p class="dashboard-subtitle">
+                Análisis financiero, rotación de productos y control de existencias.
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'admin_exportar_excel' %}?{{ request.GET.urlencode }}" class="btn-action-excel" id="btnDescargarExcel" title="Descargar libro Excel (.xlsx)">
+                📥 Descargar en Excel (.xlsx)
+            </a>
+            <a href="{% url 'admin:sorpresas_kawai_pedido_changelist' %}" class="btn-action-secondary">
+                Volver a Pedidos
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-box">
+        <form method="GET" class="filter-form" id="filterForm">
+            <div class="filter-field">
+                <label for="rango">Rango de Fecha</label>
+                <select name="rango" id="rango" onchange="togglePersonalizado(this.value)">
+                    <option value="hoy" {% if rango == 'hoy' %}selected{% endif %}>Hoy</option>
+                    <option value="7dias" {% if rango == '7dias' %}selected{% endif %}>Últimos 7 Días</option>
+                    <option value="mes" {% if rango == 'mes' %}selected{% endif %}>Este Mes</option>
+                    <option value="30dias" {% if rango == '30dias' %}selected{% endif %}>Últimos 30 Días</option>
+                    <option value="anio" {% if rango == 'anio' %}selected{% endif %}>Este Año</option>
+                    <option value="todo" {% if rango == 'todo' %}selected{% endif %}>Histórico Completo</option>
+                    <option value="personalizado" {% if rango == 'personalizado' %}selected{% endif %}>Personalizado...</option>
+                </select>
+            </div>
+
+            <div class="filter-field" id="grupoFechaInicio" style="{% if rango != 'personalizado' %}display: none;{% endif %}">
+                <label for="fecha_inicio">Desde</label>
+                <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ fecha_inicio }}">
+            </div>
+
+            <div class="filter-field" id="grupoFechaFin" style="{% if rango != 'personalizado' %}display: none;{% endif %}">
+                <label for="fecha_fin">Hasta</label>
+                <input type="date" name="fecha_fin" id="fecha_fin" value="{{ fecha_fin }}">
+            </div>
+
+            <div class="filter-field">
+                <label for="estado">Estado del Pedido</label>
+                <select name="estado" id="estado">
+                    <option value="CONFIRMADOS" {% if estado_filtro == 'CONFIRMADOS' %}selected{% endif %}>Pagados / Enviados / Entregados</option>
+                    <option value="TODOS" {% if estado_filtro == 'TODOS' %}selected{% endif %}>Todos los Estados</option>
+                    <option value="PAGADO" {% if estado_filtro == 'PAGADO' %}selected{% endif %}>Solo Pagados</option>
+                    <option value="ENVIADO" {% if estado_filtro == 'ENVIADO' %}selected{% endif %}>Solo Enviados</option>
+                    <option value="ENTREGADO" {% if estado_filtro == 'ENTREGADO' %}selected{% endif %}>Solo Entregados</option>
+                    <option value="PENDIENTE" {% if estado_filtro == 'PENDIENTE' %}selected{% endif %}>Solo Pendientes</option>
+                    <option value="CANCELADO" {% if estado_filtro == 'CANCELADO' %}selected{% endif %}>Solo Cancelados</option>
+                </select>
+            </div>
+
+            <div class="filter-field">
+                <label for="categoria">Categoría</label>
+                <select name="categoria" id="categoria">
+                    <option value="all" {% if categoria_filtro == 'all' %}selected{% endif %}>Todas</option>
+                    {% for cat in todas_categorias %}
+                        <option value="{{ cat.id }}" {% if categoria_filtro == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn-action-primary" id="btnFiltrar">
+                Filtrar
+            </button>
+        </form>
+    </div>
+
+    <!-- Indicador de período -->
+    <p style="font-size: 13px; color: var(--body-quiet-color, #666); margin: 0 0 15px 0;">
+        Filtro activo: <strong>{{ rango_etiqueta }}</strong> &bull; Estado: <strong>{{ estado_etiqueta }}</strong>
+    </p>
+
+    <!-- KPIs -->
+    <div class="kpi-row">
+        <div class="kpi-box">
+            <div class="kpi-title">Ingresos Confirmados</div>
+            <div class="kpi-number">${{ resumen.ingresos_confirmados|floatformat:"0"|default:"0" }} COP</div>
+            <div class="kpi-desc">Total pagado / entregado</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-title">Pedidos Totales</div>
+            <div class="kpi-number">{{ resumen.total_pedidos }}</div>
+            <div class="kpi-desc">{{ resumen.pedidos_pagados }} pagados / {{ resumen.pedidos_pendientes }} pendientes</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-title">Ticket Promedio</div>
+            <div class="kpi-number">${{ resumen.ticket_promedio|floatformat:"0"|default:"0" }} COP</div>
+            <div class="kpi-desc">Por pedido confirmado</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-title">Productos Vendidos</div>
+            <div class="kpi-number">{{ resumen.unidades_productos_vendidas }} un.</div>
+            <div class="kpi-desc">Artículos individuales</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-title">Combos Vendidos</div>
+            <div class="kpi-number">{{ resumen.unidades_combos_vendidas }} un.</div>
+            <div class="kpi-desc">Combos especiales</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-title">Alertas de Stock</div>
+            <div class="kpi-number" style="color: #ba2121;">{{ resumen.productos_alerta_stock }}</div>
+            <div class="kpi-desc">Existencias &le; 5 unidades</div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="charts-row">
+        <div class="chart-box">
+            <h3>Evolución de Ingresos ($ COP)</h3>
+            <div class="chart-wrap">
+                <canvas id="ventasChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-box">
+            <h3>Ventas por Categoría</h3>
+            <div class="chart-wrap">
+                <canvas id="categoriasChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tablas Top Productos y Combos -->
+    <div class="tables-row">
+        <!-- Top Productos -->
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3>Top Productos Más Vendidos</h3>
+                <span style="font-size: 11px; opacity: 0.9;">{{ productos_metricas|length }} ítems</span>
+            </div>
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th style="text-align: right;">Vendidos</th>
+                            <th style="text-align: right;">Ingresos</th>
+                            <th style="text-align: center;">Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in productos_metricas|slice:":8" %}
+                        <tr>
+                            <td><strong>{{ p.nombre }}</strong></td>
+                            <td style="color: #666;">{{ p.categoria }}</td>
+                            <td style="text-align: right; font-weight: bold;">{{ p.unidades_vendidas }}</td>
+                            <td style="text-align: right; color: #28a745; font-weight: bold;">${{ p.ingresos_generados|floatformat:"0" }}</td>
+                            <td style="text-align: center;">
+                                {% if p.stock == 0 %}
+                                    <span class="status-tag tag-alert-crit">0 (Agotado)</span>
+                                {% elif p.stock <= 5 %}
+                                    <span class="status-tag tag-alert-low">{{ p.stock }}</span>
+                                {% else %}
+                                    <span class="status-tag tag-alert-ok">{{ p.stock }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 20px; color: #888;">No hay ventas registradas en el período.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Top Combos -->
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3>Combos y Cajas Sorpresa</h3>
+                <span style="font-size: 11px; opacity: 0.9;">{{ combos_metricas|length }} combos</span>
+            </div>
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Combo</th>
+                            <th style="text-align: right;">Precio</th>
+                            <th style="text-align: right;">Vendidos</th>
+                            <th style="text-align: right;">Ingresos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in combos_metricas|slice:":8" %}
+                        <tr>
+                            <td><strong>{{ c.nombre }}</strong></td>
+                            <td style="text-align: right;">${{ c.valor_combo|floatformat:"0" }}</td>
+                            <td style="text-align: right; font-weight: bold;">{{ c.unidades_vendidas }}</td>
+                            <td style="text-align: right; color: #28a745; font-weight: bold;">${{ c.ingresos_generados|floatformat:"0" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 20px; color: #888;">No hay combos vendidos en el período.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas de Inventario -->
+    <div class="admin-card">
+        <div class="admin-card-header" style="background-color: #ba2121;">
+            <h3>⚠️ Alertas de Stock Bajo (Control de Compras a Proveedores)</h3>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <span style="font-size: 11px; opacity: 0.9;">{{ alertas_stock|length }} alertas</span>
+                <a href="{% url 'admin_enviar_alerta_stock' %}" style="background: #ffffff; color: #ba2121; font-size: 11px; font-weight: bold; padding: 4px 10px; border-radius: 3px; text-decoration: none;" title="Enviar notificación por correo">
+                    📧 Enviar Alerta al Correo
+                </a>
+            </div>
+        </div>
+        <div class="table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th style="text-align: center;">Stock</th>
+                        <th style="text-align: right;">Precio Unitario</th>
+                        <th style="text-align: center;">Estado</th>
+                        <th>Acción Sugerida</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prod in alertas_stock %}
+                    <tr>
+                        <td><strong>{{ prod.nombre }}</strong></td>
+                        <td>{{ prod.id_categoria.nombre|default:"Sin Categoría" }}</td>
+                        <td style="text-align: center;">
+                            <span class="status-tag {% if prod.stock == 0 %}tag-alert-crit{% else %}tag-alert-low{% endif %}">
+                                {{ prod.stock }} un.
+                            </span>
+                        </td>
+                        <td style="text-align: right; font-weight: bold;">${{ prod.valor_unitario|floatformat:"0" }} COP</td>
+                        <td style="text-align: center;">
+                            {% if prod.stock == 0 %}
+                                <span class="status-tag tag-alert-crit">AGOTADO</span>
+                            {% elif prod.stock <= 3 %}
+                                <span class="status-tag tag-alert-crit">CRÍTICO (&le; 3)</span>
+                            {% else %}
+                                <span class="status-tag tag-alert-low">BAJO (&le; 5)</span>
+                            {% endif %}
+                        </td>
+                        <td style="color: #666;">
+                            {% if prod.stock == 0 %}
+                                Reabastecer de inmediato con proveedor.
+                            {% else %}
+                                Planear orden de compra de reposición.
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px; color: #28a745; font-weight: bold;">
+                            ✓ Todos los productos cuentan con inventario suficiente (&gt; 5 unidades).
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Detalle de Pedidos del Período -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h3>Detalle de Pedidos en el Período</h3>
+            <span style="font-size: 11px; opacity: 0.9;">{{ pedidos_qs|length }} pedidos</span>
+        </div>
+        <div class="table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>N° Pedido</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Email</th>
+                        <th style="text-align: right;">Total</th>
+                        <th style="text-align: center;">Estado</th>
+                        <th>Método Pago</th>
+                        <th>Guía</th>
+                        <th style="text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in pedidos_qs|slice:":25" %}
+                    <tr>
+                        <td><strong>{{ p.codigo_pedido }}</strong></td>
+                        <td style="color: #666; font-size: 12px;">{{ p.fecha_pedido|date:"d/m/Y H:i" }}</td>
+                        <td>{{ p.id_usuario.first_name|default:p.id_usuario.username }}</td>
+                        <td style="color: #666; font-size: 12px;">{{ p.id_usuario.email }}</td>
+                        <td style="text-align: right; font-weight: bold; color: #28a745;">${{ p.valor_pagado|floatformat:"0" }} COP</td>
+                        <td style="text-align: center;">
+                            {% if p.estado == 'PAGADO' %}
+                                <span class="status-tag tag-pagado">Pagado</span>
+                            {% elif p.estado == 'ENVIADO' %}
+                                <span class="status-tag tag-enviado">Enviado</span>
+                            {% elif p.estado == 'ENTREGADO' %}
+                                <span class="status-tag tag-entregado">Entregado</span>
+                            {% elif p.estado == 'PENDIENTE' %}
+                                <span class="status-tag tag-pendiente">Pendiente</span>
+                            {% elif p.estado == 'CANCELADO' %}
+                                <span class="status-tag tag-cancelado">Cancelado</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 12px;">{{ p.metodo_pago|default:"—" }}</td>
+                        <td style="font-size: 12px;">
+                            {% if p.numero_guia %}
+                                {{ p.empresa_envio }}: {{ p.numero_guia }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            <a href="{% url 'admin:sorpresas_kawai_pedido_change' p.id %}" style="font-weight: bold; color: var(--primary, #417690); text-decoration: none;">
+                                Editar
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 20px; color: #888;">No se encontraron pedidos con los filtros especificados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function togglePersonalizado(val) {
+        const dInicio = document.getElementById('grupoFechaInicio');
+        const dFin = document.getElementById('grupoFechaFin');
+        if (val === 'personalizado') {
+            dInicio.style.display = 'flex';
+            dFin.style.display = 'flex';
+        } else {
+            dInicio.style.display = 'none';
+            dFin.style.display = 'none';
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Gráfico de Ingresos Diarios
+        const labelsVentas = {{ chart_labels|safe }};
+        const dataIngresos = {{ chart_ingresos|safe }};
+
+        const ctxVentas = document.getElementById('ventasChart');
+        if (ctxVentas) {
+            new Chart(ctxVentas, {
+                type: 'line',
+                data: {
+                    labels: labelsVentas.length ? labelsVentas : ['Sin datos'],
+                    datasets: [{
+                        label: 'Ingresos ($ COP)',
+                        data: dataIngresos.length ? dataIngresos : [0],
+                        borderColor: '#417690',
+                        backgroundColor: 'rgba(65, 118, 144, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 3,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value >= 1000 ? (value / 1000) + 'k' : value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfico por Categoría
+        const catLabels = [{% for c in categorias_ventas %}"{{ c.categoria }}",{% endfor %}];
+        const catIngresos = [{% for c in categorias_ventas %}{{ c.ingresos }},{% endfor %}];
+
+        const ctxCat = document.getElementById('categoriasChart');
+        if (ctxCat) {
+            new Chart(ctxCat, {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels.length ? catLabels : ['Sin datos'],
+                    datasets: [{
+                        data: catIngresos.length ? catIngresos : [1],
+                        backgroundColor: ['#417690', '#79aec8', '#447e9b', '#28a745', '#ffc107', '#6c757d'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } }
+                    },
+                    cutout: '60%'
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

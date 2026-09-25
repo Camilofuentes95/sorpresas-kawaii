@@ -54,4 +54,7 @@ urlpatterns = [
     path('combos/', views.lista_combos, name='lista_combos'),
     path('combos/agregar/<uuid:combo_id>/', views.agregar_combo_a_carrito, name='agregar_combo_a_carrito'),
     path('combos/quitar/<uuid:combo_id>/', views.quitar_combo_de_carrito, name='quitar_combo_de_carrito'),
+    path('panel-admin/metricas/', views.metricas_ventas_dashboard, name='panel_admin_metricas'),
+    path('panel-admin/metricas/exportar-excel/', views.exportar_metricas_excel, name='panel_admin_exportar_excel'),
+    path('panel-admin/metricas/enviar-alerta-stock/', views.enviar_alerta_stock_email_manual, name='panel_admin_enviar_alerta_stock'),
 ]

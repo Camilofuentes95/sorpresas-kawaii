@@ -6,88 +6,151 @@
 {% block content %}
 <div class="pedidos-container">
     <div class="pedidos-header">
-        <h1>📦 Mis Pedidos</h1>
-        <p>Consulta el historial y seguimiento de tus compras en Sorpresas Kawaii.</p>
+        <span class="pedidos-sparkle">📦✨</span>
+        <h1>Mis Pedidos</h1>
+        <p>Consulta el historial, seguimiento y vuelve a comprar tus productos favoritos.</p>
     </div>
 
     {% if pedidos %}
         {% for pedido in pedidos %}
-        <div class="pedido-card">
-            <div class="pedido-card-header">
-                <div class="pedido-meta">
-                    <span class="pedido-id">Pedido {{ pedido.codigo_pedido }}</span>
-                    <span class="pedido-fecha">{{ pedido.fecha_pedido|date:"d M Y, h:i A" }}</span>
+        <div class="amazon-order-card">
+            <!-- Barra Superior de Metadatos de la Orden (Estilo Amazon) -->
+            <div class="amazon-order-header">
+                <div class="order-meta-group">
+                    <div class="order-meta-item">
+                        <span class="meta-label">PEDIDO REALIZADO</span>
+                        <span class="meta-value">{{ pedido.fecha_pedido|date:"d \d\e F \d\e Y" }}</span>
+                    </div>
+                    <div class="order-meta-item">
+                        <span class="meta-label">TOTAL DEL PEDIDO</span>
+                        <span class="meta-value order-total-highlight">${{ pedido.valor_pagado|floatformat:0 }} COP</span>
+                    </div>
                 </div>
-                <div>
-                    <span class="badge-estado estado-{{ pedido.estado }}">
-                        {{ pedido.get_estado_display }}
-                    </span>
+
+                <div class="order-meta-id-group">
+                    <span class="meta-label">N° DE PEDIDO {{ pedido.codigo_pedido }}</span>
                 </div>
             </div>
 
-            <div class="pedido-items-list">
-                {% for detalle in pedido.detalles.all %}
-                <div class="pedido-item-row">
-                    <div class="pedido-item-info">
-                        {% if detalle.producto and detalle.producto.get_imagen_url %}
-                            <img class="pedido-item-img" src="{{ detalle.producto.get_imagen_url }}" alt="{{ detalle.producto.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
-                        {% elif detalle.combo and detalle.combo.get_imagen_url %}
-                            <img class="pedido-item-img" src="{{ detalle.combo.get_imagen_url }}" alt="{{ detalle.combo.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
-                        {% else %}
-                            <img class="pedido-item-img" src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+            <!-- Cuerpo del Pedido -->
+            <div class="amazon-order-body">
+                <!-- Estado Principal Destacado -->
+                <div class="amazon-order-status-headline">
+                    {% if pedido.estado == 'ENTREGADO' %}
+                        <h2 class="status-title status-delivered">
+                            <i class="fa-solid fa-circle-check"></i> Entregado con éxito
+                        </h2>
+                    {% elif pedido.estado == 'ENVIADO' %}
+                        <h2 class="status-title status-shipped">
+                            <i class="fa-solid fa-truck-fast"></i> En camino a tu dirección
+                        </h2>
+                    {% elif pedido.estado == 'PAGADO' %}
+                        <h2 class="status-title status-paid">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Pago confirmado &bull; Preparando tu paquete
+                        </h2>
+                    {% elif pedido.estado == 'PENDIENTE' %}
+                        <h2 class="status-title status-pending">
+                            <i class="fa-solid fa-hourglass-half"></i> Pendiente de confirmación por WhatsApp
+                        </h2>
+                    {% elif pedido.estado == 'CANCELADO' %}
+                        <h2 class="status-title status-cancelled">
+                            <i class="fa-solid fa-circle-xmark"></i> Pedido cancelado
+                        </h2>
+                    {% endif %}
+                </div>
+
+                <!-- Contenido en 2 Columnas (Artículos a la izquierda, Acciones a la derecha) -->
+                <div class="amazon-order-grid-layout">
+                    <!-- Columna Izquierda: Lista de Productos -->
+                    <div class="amazon-items-carousel">
+                        {% for detalle in pedido.detalles.all %}
+                        <div class="amazon-product-card">
+                            <div class="amazon-product-thumb">
+                                {% if detalle.producto and detalle.producto.get_imagen_url %}
+                                    <img src="{{ detalle.producto.get_imagen_url }}" alt="{{ detalle.producto.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                                {% elif detalle.combo and detalle.combo.get_imagen_url %}
+                                    <img src="{{ detalle.combo.get_imagen_url }}" alt="{{ detalle.combo.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                                {% else %}
+                                    <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+                                {% endif %}
+                            </div>
+
+                            <div class="amazon-product-info">
+                                <h3 class="amazon-product-title">
+                                    {% if detalle.producto %}
+                                        {{ detalle.producto.nombre }}
+                                    {% elif detalle.combo %}
+                                        {{ detalle.combo.nombre }} <span class="badge-combo-tag">Combo</span>
+                                    {% else %}
+                                        Ítem
+                                    {% endif %}
+                                </h3>
+
+                                <div class="amazon-pricing-block">
+                                    <span class="item-unit-price"><i class="fa-solid fa-tag"></i> Precio unitario: <strong>${{ detalle.precio_item|floatformat:0 }} COP</strong></span>
+                                    <span class="item-qty-tag"><i class="fa-solid fa-cubes"></i> Cant: <strong>{{ detalle.cantidad }}</strong></span>
+                                    <span class="item-subtotal-tag">Subtotal: <strong>${% widthratio detalle.precio_item 1 detalle.cantidad %} COP</strong></span>
+                                </div>
+
+                                <!-- Botón Comprar Nuevamente -->
+                                {% if detalle.producto %}
+                                <form method="post" action="{% url 'agregar_a_carrito' detalle.producto.id %}" class="form-buy-again">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-buy-again" title="Agregar este producto al carrito">
+                                        <i class="fa-solid fa-rotate-right"></i> Comprar nuevamente
+                                    </button>
+                                </form>
+                                {% elif detalle.combo %}
+                                <form method="post" action="{% url 'agregar_combo_a_carrito' detalle.combo.id %}" class="form-buy-again">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-buy-again" title="Agregar este combo al carrito">
+                                        <i class="fa-solid fa-rotate-right"></i> Comprar nuevamente
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p style="color: var(--kawaii-text-muted); font-size: 0.9em; margin: 10px 0;">Artículos registrados en la orden.</p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Columna Derecha: Acciones del Pedido -->
+                    <div class="amazon-side-actions">
+                        {% if pedido.estado == 'PENDIENTE' %}
+                            <a href="{{ pedido.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="btn-amazon-primary-action btn-wa-action" title="Confirmar pedido por WhatsApp">
+                                <i class="fa-brands fa-whatsapp"></i> Confirmar en WhatsApp
+                            </a>
                         {% endif %}
 
-                        <div class="pedido-item-details">
-                            <p class="item-title">
-                                {% if detalle.producto %}
-                                    {{ detalle.producto.nombre }}
-                                {% elif detalle.combo %}
-                                    {{ detalle.combo.nombre }} <span style="font-size: 0.8em; color: var(--kawaii-purple-main);">(Combo)</span>
-                                {% else %}
-                                    Ítem
-                                {% endif %}
-                            </p>
-                            <p class="item-qty">{{ detalle.cantidad }} unidad{{ detalle.cantidad|pluralize:"es" }} &times; ${{ detalle.precio_item|floatformat:0 }}</p>
+                        {% if pedido.estado == 'ENVIADO' or pedido.estado == 'ENTREGADO' %}
+                            <button class="btn-amazon-primary-action btn-track-action" type="button" onclick="abrirGuia('{{ pedido.codigo_pedido|escapejs }}', '{{ pedido.empresa_envio|default:"Pendiente"|escapejs }}', '{{ pedido.numero_guia|default:"Pendiente"|escapejs }}', '{{ pedido.get_estado_display|escapejs }}')">
+                                <i class="fa-solid fa-truck-fast"></i> Ver Guía de Envío
+                            </button>
+                        {% endif %}
+
+                        <a href="https://wa.me/573222385508?text=Hola,%20necesito%20soporte%20sobre%20mi%20pedido%20{{ pedido.codigo_pedido }}" target="_blank" rel="noopener noreferrer" class="btn-amazon-secondary-action">
+                            <i class="fa-regular fa-comment-dots"></i> Obtener soporte
+                        </a>
+
+                        <div class="amazon-order-summary-box">
+                            <span class="summary-label">Total Facturado:</span>
+                            <span class="summary-amount">${{ pedido.valor_pagado|floatformat:0 }} COP</span>
                         </div>
                     </div>
-
-                    <div class="pedido-item-price">
-                        ${% widthratio detalle.precio_item 1 detalle.cantidad %}
-                    </div>
                 </div>
-                {% empty %}
-                <p style="color: var(--kawaii-text-muted); font-size: 0.9em; margin: 0;">Detalle no disponible para este pedido.</p>
-                {% endfor %}
-            </div>
-
-            <div class="pedido-card-footer">
-                <div class="pedido-total-wrap">
-                    Total: <strong>${{ pedido.valor_pagado|floatformat:0 }} COP</strong>
-                </div>
-
-                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                    {% if pedido.estado == 'PENDIENTE' %}
-                        <a href="{{ pedido.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp-sm" title="Confirmar pedido por WhatsApp">
-                            <i class="fa-brands fa-whatsapp"></i> Confirmar en WhatsApp
-                        </a>
-                    {% endif %}
-
-                    {% if pedido.estado == 'ENVIADO' or pedido.estado == 'ENTREGADO' %}
-                        <button class="btn-guia" type="button" onclick="abrirGuia('{{ pedido.codigo_pedido|escapejs }}', '{{ pedido.empresa_envio|default:"Pendiente"|escapejs }}', '{{ pedido.numero_guia|default:"Pendiente"|escapejs }}', '{{ pedido.get_estado_display|escapejs }}')">
-                            🚚 Ver Guía de Envío
-                        </button>
-                    {% endif %}
-                </div>
-
             </div>
         </div>
         {% endfor %}
     {% else %}
         <div class="empty-pedidos">
-            <div style="font-size: 3em; margin-bottom: 10px;">🛍️</div>
-            <h2>Aún no tienes pedidos</h2>
-            <p>Cuando realices una compra, podrás seguir el estado de tus artículos aquí.</p>
-            <a href="{% url 'lista_productos' %}">Explorar Productos</a> | <a href="{% url 'lista_combos' %}">Ver Combos</a>
+            <div style="font-size: 3.5em; margin-bottom: 12px;">🛍️✨</div>
+            <h2>Aún no tienes pedidos registrados</h2>
+            <p>Cuando realices una compra, podrás consultar el seguimiento en vivo y volver a pedir tus artículos aquí.</p>
+            <div style="margin-top: 18px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <a href="{% url 'lista_productos' %}" class="btn-pedidos-link">Explorar Productos</a>
+                <a href="{% url 'lista_combos' %}" class="btn-pedidos-link secondary">Ver Combos</a>
+            </div>
         </div>
     {% endif %}
 </div>

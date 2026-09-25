@@ -59,6 +59,11 @@ class Producto(models.Model):
     stock = models.IntegerField(default=0)
     imagen = models.ImageField(upload_to='productos/', blank=True, null=True)
     imagen_url = models.URLField(max_length=700, blank=True, null=True)
+    es_nuevo = models.BooleanField(
+        default=False,
+        verbose_name="¿Es Novedad / Producto Nuevo?",
+        help_text="Si está marcado, se mostrará una insignia destacada '✨ Nuevo' en el catálogo y la tienda."
+    )
     activo = models.BooleanField(default=True)
 
     class Meta:
@@ -111,6 +116,11 @@ class Combo(models.Model):
     descuento_porcentaje = models.FloatField(default=0.0)
     valor_combo = models.FloatField()
     valido_hasta = models.DateField(blank=True, null=True)
+    es_nuevo = models.BooleanField(
+        default=False,
+        verbose_name="¿Es Combo Nuevo / Novedad?",
+        help_text="Si está marcado, se mostrará una insignia destacada '✨ Nuevo' en el catálogo de combos."
+    )
     activo = models.BooleanField(default=True)
 
     class Meta:
@@ -381,3 +391,100 @@ class ItemCarrito(models.Model):
             )
         )
         return f"{self.cantidad} x {nombre}"
+
+
+class ConfiguracionTienda(models.Model):
+    """
+    Modelo singleton para almacenar configuraciones globales de la tienda
+    y permitir al administrador activar o pausar módulos desde Django Admin.
+    """
+    compras_habilitadas = models.BooleanField(
+        default=False,
+        verbose_name="¿Finalización de compras habilitada?",
+        help_text="Si está desmarcado, se deshabilita el checkout y se muestra aviso de mantenimiento."
+    )
+    modulo_productos_habilitado = models.BooleanField(
+        default=True,
+        verbose_name="¿Catálogo de Productos habilitado?",
+        help_text="Controla la visibilidad y disponibilidad del catálogo general de productos."
+    )
+    modulo_sorpresas_habilitado = models.BooleanField(
+        default=True,
+        verbose_name="¿Sección de Sorpresas habilitada?",
+        help_text="Controla la visibilidad y disponibilidad del módulo de sorpresas / scoops."
+    )
+    modulo_combos_habilitado = models.BooleanField(
+        default=True,
+        verbose_name="¿Sección de Combos habilitada?",
+        help_text="Controla la visibilidad y disponibilidad del catálogo de combos."
+    )
+    mensaje_mantenimiento_compras = models.TextField(
+        default="El proceso de compra en línea se encuentra temporalmente en mantenimiento. ¡Pronto estará habilitado nuevamente!",
+        blank=True,
+        verbose_name="Mensaje aviso de compras"
+    )
+    mensaje_mantenimiento_productos = models.TextField(
+        default="¡Estamos actualizando nuestro catálogo con nuevos artículos kawaii! Esta sección estará disponible muy pronto.",
+        blank=True,
+        verbose_name="Mensaje aviso de productos"
+    )
+    mensaje_mantenimiento_sorpresas = models.TextField(
+        default="¡Estamos preparando nuevas experiencias y sorpresas mágicas! Esta sección estará disponible muy pronto.",
+        blank=True,
+        verbose_name="Mensaje aviso de sorpresas"
+    )
+    mensaje_mantenimiento_combos = models.TextField(
+        default="¡Estamos renovando nuestras combinaciones y combos especiales! Vuelve a consultarlos pronto.",
+        blank=True,
+        verbose_name="Mensaje aviso de combos"
+    )
+    monto_minimo_envio_gratis = models.FloatField(
+        default=60000.0,
+        verbose_name="Monto mínimo para Envío Gratis (COP)",
+        help_text="Compras con subtotal igual o superior a este valor tendrán envío gratuito."
+    )
+    costo_envio_estandar = models.FloatField(
+        default=5000.0,
+        verbose_name="Costo de envío estándar (COP)",
+        help_text="Valor que se cobrará por envío si el pedido no alcanza el monto mínimo para envío gratis."
+    )
+
+    class Meta:
+        verbose_name = "⚙️ Configuración de la Tienda"
+        verbose_name_plural = "⚙️ Configuración de la Tienda"
+
+    def __str__(self):
+        return "⚙️ Ajustes Globales de la Tienda"
+
+    @classmethod
+    def get_solo(cls):
+        """Devuelve siempre la única instancia de configuración, creándola si no existe."""
+        obj, _ = cls.objects.get_or_create(id=1)
+        return obj
+
+    def save(self, *args, **kwargs):
+        """Garantiza que siempre tenga id=1 para mantener una única instancia singleton."""
+        self.id = 1
+        super().save(*args, **kwargs)
+
+
+class SorpresaManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(id_categoria__nombre__iexact='Sorpresa')
+
+
+class Sorpresa(Producto):
+    """
+    Modelo Proxy para gestionar de forma dedicada las experiencias sorpresa
+    (como Lucky Pop, Scoops, Ruletas, Cajas Misteriosas) en el panel de administración
+    sin alterar el esquema relacional de Producto.
+    """
+    objects = SorpresaManager()
+
+    class Meta:
+        proxy = True
+        verbose_name = "Sorpresa y Experiencia"
+        verbose_name_plural = "🎁 Sorpresas y Experiencias"
+
+
+

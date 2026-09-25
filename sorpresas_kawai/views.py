@@ -11,11 +11,18 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.core.mail import send_mail
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.conf import settings
 
 from .models import (
     Categoria, Producto, Combo, Pedido,
-    DetallePedido, CarritoDeCompras, ItemCarrito
+    DetallePedido, CarritoDeCompras, ItemCarrito,
+    ConfiguracionTienda
+)
+from .metricas_views import (
+    metricas_ventas_dashboard,
+    exportar_metricas_excel,
+    enviar_alerta_stock_email_manual
 )
 
 # Etiquetas aleatorias para destacar productos en el inicio
@@ -81,6 +88,18 @@ def login_view(request):
 
 
 def lista_productos(request):
+    config = ConfiguracionTienda.get_solo()
+    if not config.modulo_productos_habilitado:
+        return render(
+            request,
+            "productos/lista.html",
+            {
+                "modulo_habilitado": False,
+                "mensaje_mantenimiento": config.mensaje_mantenimiento_productos,
+                "titulo": "Catálogo en Mantenimiento",
+            }
+        )
+
     if not Producto.objects.exists():
         from .seed_data import seed_database
         seed_database()
@@ -100,7 +119,15 @@ def lista_productos(request):
             id_categoria__nombre__iexact=categoria_slug
         )
 
-    productos = productos_query.all()
+    # Paginación (12 productos por página)
+    paginator = Paginator(productos_query, 12)
+    page_number = request.GET.get('page', 1)
+    try:
+        productos_paginados = paginator.page(page_number)
+    except PageNotAnInteger:
+        productos_paginados = paginator.page(1)
+    except EmptyPage:
+        productos_paginados = paginator.page(paginator.num_pages)
 
     # Obtener categorías que tengan productos activos
     categorias = Categoria.objects.filter(
@@ -128,7 +155,9 @@ def lista_productos(request):
             pass
 
     contexto = {
-        "productos": productos,
+        "modulo_habilitado": True,
+        "productos": productos_paginados,
+        "page_obj": productos_paginados,
         "categorias": categorias,
         "categoria_seleccionada": categoria_slug,
         "titulo": "Nuestra Colección de Productos",
@@ -143,25 +172,43 @@ def lista_productos(request):
 
 
 def lista_sorpresas(request):
-    """Muestra las experiencias de scoop sorpresa disponibles."""
+    """Muestra las experiencias sorpresa (Lucky Pop, Scoops, etc.) disponibles."""
+    config = ConfiguracionTienda.get_solo()
+    if not config.modulo_sorpresas_habilitado:
+        return render(request, 'productos/sorpresas.html', {
+            'modulo_habilitado': False,
+            'mensaje_mantenimiento': config.mensaje_mantenimiento_sorpresas,
+        })
+
     if not Producto.objects.exists():
         from .seed_data import seed_database
         seed_database()
 
-    scoop_normal = Producto.objects.filter(
-        nombre='Scoop Normal',
+    sorpresas_qs = Producto.objects.filter(
         id_categoria__nombre__iexact='Sorpresa',
         activo=True,
-    ).first()
+    ).order_by('valor_unitario')
 
-    cantidad_en_carrito = 0
-    if request.user.is_authenticated and scoop_normal:
-        cantidad_en_carrito = ItemCarrito.objects.filter(
+    carrito_cantidades = {}
+    if request.user.is_authenticated:
+        items = ItemCarrito.objects.filter(
             carrito__usuario=request.user,
-            producto=scoop_normal,
-        ).values_list('cantidad', flat=True).first() or 0
+            producto__in=sorpresas_qs
+        ).values('producto_id', 'cantidad')
+        for item in items:
+            carrito_cantidades[item['producto_id']] = item['cantidad']
+
+    sorpresas = []
+    for s in sorpresas_qs:
+        s.cant_carrito = carrito_cantidades.get(s.id, 0)
+        sorpresas.append(s)
+
+    scoop_normal = sorpresas_qs.filter(nombre='Scoop Normal').first()
+    cantidad_en_carrito = carrito_cantidades.get(scoop_normal.id, 0) if scoop_normal else 0
 
     return render(request, 'productos/sorpresas.html', {
+        'modulo_habilitado': True,
+        'sorpresas': sorpresas,
         'scoop_normal': scoop_normal,
         'cantidad_en_carrito': cantidad_en_carrito,
     })
@@ -215,8 +262,9 @@ def ver_carrito(request):
     items_carrito = []
     subtotal = 0
     total = 0
-    monto_minimo_envio_gratis = 60000
-    costo_envio = 5000
+    config = ConfiguracionTienda.get_solo()
+    monto_minimo_envio_gratis = config.monto_minimo_envio_gratis
+    costo_envio = config.costo_envio_estandar
 
     try:
         carrito = CarritoDeCompras.objects.get(usuario=request.user)
@@ -249,6 +297,8 @@ def ver_carrito(request):
         'monto_minimo_envio_gratis': monto_minimo_envio_gratis,
         'falta_para_envio_gratis': falta_para_envio_gratis,
         'envio_gratis': envio_gratis,
+        'finalizar_compra_habilitado': config.compras_habilitadas,
+        'mensaje_mantenimiento_compras': config.mensaje_mantenimiento_compras,
     }
 
     return render(request, 'carrito/detalle.html', contexto)
@@ -310,20 +360,28 @@ def inicio(request):
 
     productos_destacados = list(productos_query.order_by('?')[:3])
 
-    # Asignar etiquetas aleatorias variadas sin repetir a los 3 productos
+    # Asignar etiquetas a los productos destacados (priorizando si es nuevo)
     badges_disponibles = PRODUCT_BADGES.copy()
     random.shuffle(badges_disponibles)
     for idx, prod in enumerate(productos_destacados):
-        badge = badges_disponibles[idx % len(badges_disponibles)]
-        prod.badge_icon = badge['icon']
-        prod.badge_text = badge['text']
+        if prod.es_nuevo:
+            prod.badge_icon = 'fa-solid fa-sparkles'
+            prod.badge_text = '✨ Novedad'
+        else:
+            badge = badges_disponibles[idx % len(badges_disponibles)]
+            prod.badge_icon = badge['icon']
+            prod.badge_text = badge['text']
 
     # Obtener 1 combo activo al azar
     combos_destacados = list(Combo.objects.filter(activo=True).order_by('?')[:1])
     if combos_destacados:
-        combo_tag = random.choice(COMBO_BADGES)
-        combos_destacados[0].badge_icon = combo_tag['icon']
-        combos_destacados[0].badge_text = combo_tag['text']
+        if combos_destacados[0].es_nuevo:
+            combos_destacados[0].badge_icon = 'fa-solid fa-wand-magic-sparkles'
+            combos_destacados[0].badge_text = '✨ Nuevo Combo'
+        else:
+            combo_tag = random.choice(COMBO_BADGES)
+            combos_destacados[0].badge_icon = combo_tag['icon']
+            combos_destacados[0].badge_text = combo_tag['text']
 
     # Diccionarios para el carrito
     productos_en_carrito = {}
@@ -346,7 +404,7 @@ def inicio(request):
         'productos_en_carrito': productos_en_carrito,
         'combos_en_carrito': combos_en_carrito,
     }
-    return render(request, 'Inicio.html', contexto)
+    return render(request, 'inicio.html', contexto)
 
 
 def sobre_nosotros(request):
@@ -355,6 +413,14 @@ def sobre_nosotros(request):
 
 @login_required
 def finalizar_compra(request):
+    config = ConfiguracionTienda.get_solo()
+    if not config.compras_habilitadas:
+        messages.warning(
+            request,
+            config.mensaje_mantenimiento_compras or "La opción de finalizar compras no se encuentra disponible temporalmente."
+        )
+        return redirect('ver_carrito')
+
     if request.method == 'POST':
         try:
             with transaction.atomic():
@@ -370,7 +436,7 @@ def finalizar_compra(request):
                     )
                     subtotal += item.cantidad * precio_unitario
 
-                costo_envio = 0 if subtotal >= 60000 else 5000
+                costo_envio = 0 if subtotal >= config.monto_minimo_envio_gratis else config.costo_envio_estandar
                 valor_total_pagado = subtotal + costo_envio
 
                 nuevo_pedido = Pedido.objects.create(
@@ -380,6 +446,8 @@ def finalizar_compra(request):
                     metodo_pago='Coordinar por WhatsApp',
                 )
                 items_comprados_info = []
+                productos_alerta_stock = []
+
                 for item in items_carrito:
                     precio_unitario = (
                         item.producto.precio_final if item.producto else item.combo.precio_final
@@ -394,16 +462,34 @@ def finalizar_compra(request):
                     nombre_item = item.producto.nombre if item.producto else (item.combo.nombre if item.combo else 'Ítem')
                     items_comprados_info.append(f"• {item.cantidad}x {nombre_item} - ${precio_unitario:,.0f} COP c/u")
 
+                    # Actualización de inventario en tiempo real
+                    if item.producto:
+                        item.producto.stock = max(0, item.producto.stock - item.cantidad)
+                        item.producto.save(update_fields=['stock'])
+                        if item.producto.stock <= 5 and item.producto not in productos_alerta_stock:
+                            productos_alerta_stock.append(item.producto)
+                    elif item.combo:
+                        for cp in item.combo.combosproductos_set.all():
+                            p_combo = cp.producto
+                            cant_descontar = cp.cantidad * item.cantidad
+                            p_combo.stock = max(0, p_combo.stock - cant_descontar)
+                            p_combo.save(update_fields=['stock'])
+                            if p_combo.stock <= 5 and p_combo not in productos_alerta_stock:
+                                productos_alerta_stock.append(p_combo)
+
                 items_carrito.delete()
 
-                # Enviar correos: confirmación al cliente y notificación al administrador
+                # Enviar correos: confirmación al cliente, notificación al administrador y alertas de stock bajo
                 try:
                     from .emails import (
                         enviar_correo_confirmacion_compra,
-                        enviar_correo_nuevo_pedido_administrador
+                        enviar_correo_nuevo_pedido_administrador,
+                        enviar_correo_alerta_stock_bajo
                     )
                     enviar_correo_confirmacion_compra(nuevo_pedido)
                     enviar_correo_nuevo_pedido_administrador(nuevo_pedido)
+                    if productos_alerta_stock:
+                        enviar_correo_alerta_stock_bajo(productos_alerta_stock, motivo="Compra Realizada", pedido=nuevo_pedido)
                 except Exception:
                     pass
 
@@ -444,6 +530,18 @@ def pagina_confirmacion(request, pedido_id):
 
 def lista_combos(request):
     """Muestra el catálogo de combos disponibles."""
+    config = ConfiguracionTienda.get_solo()
+    if not config.modulo_combos_habilitado:
+        return render(
+            request,
+            "productos/combos.html",
+            {
+                "modulo_habilitado": False,
+                "mensaje_mantenimiento": config.mensaje_mantenimiento_combos,
+                "titulo": "Combos en Mantenimiento",
+            }
+        )
+
     if not Producto.objects.exists():
         from .seed_data import seed_database
         seed_database()
@@ -473,8 +571,20 @@ def lista_combos(request):
         else:
             combo.descripcion_productos = None
 
+    # Paginación (12 combos por página)
+    paginator = Paginator(combos, 12)
+    page_number = request.GET.get('page', 1)
+    try:
+        combos_paginados = paginator.page(page_number)
+    except PageNotAnInteger:
+        combos_paginados = paginator.page(1)
+    except EmptyPage:
+        combos_paginados = paginator.page(paginator.num_pages)
+
     contexto = {
-        "combos": combos,
+        "modulo_habilitado": True,
+        "combos": combos_paginados,
+        "page_obj": combos_paginados,
         "titulo": "Nuestra Colección de Combos",
         "combos_en_carrito": combos_en_carrito,
     }

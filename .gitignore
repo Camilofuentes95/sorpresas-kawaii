@@ -27,6 +27,12 @@ htmlcov/
 *.log
 log.txt
 
+# Documentos generados y carpeta de documentación local
+Documents/
+documents/
+*.pdf
+
+
 
 # -----------------------------------------------------------------------------
 # Entorno Virtual y Dependencias

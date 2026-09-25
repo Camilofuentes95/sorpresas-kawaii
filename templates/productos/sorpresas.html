@@ -1,65 +1,90 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Sorpresas{% endblock %}
+{% block title %}Experiencias & Sorpresas - Edukit · Sorpresas Kawaii{% endblock %}
 
 {% block content %}
 <section class="sorpresas-container">
+    {% if not modulo_habilitado %}
+    <div style="max-width: 650px; margin: 50px auto; background: #ffffff; border: 2px dashed #e94fa3; border-radius: 24px; padding: 40px 30px; text-align: center; box-shadow: 0 10px 30px rgba(233, 79, 163, 0.12);">
+        <div style="font-size: 3.5rem; margin-bottom: 15px; animation: pulse 2s infinite;">🎁✨</div>
+        <h1 style="color: #6a0f6a; font-size: 1.8rem; margin-bottom: 12px; font-weight: 800;">Sección Sorpresas en Mantenimiento</h1>
+        <p style="color: #666; font-size: 1.05rem; line-height: 1.6; margin-bottom: 25px;">
+            {{ mensaje_mantenimiento|default:"¡Estamos preparando nuevas experiencias y sorpresas mágicas! Esta sección estará disponible muy pronto."|linebreaksbr }}
+        </p>
+        <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+            <a href="{% url 'lista_productos' %}" class="btn-productos" style="background: linear-gradient(135deg, #e94fa3 0%, #8c52ff 100%); color: white; padding: 12px 24px; border-radius: 50px; text-decoration: none; font-weight: bold; display: inline-block;">
+                <i class="fa-solid fa-store"></i> Explorar Productos
+            </a>
+            <a href="{% url 'inicio' %}" style="background: #f0e6f0; color: #6a0f6a; padding: 12px 24px; border-radius: 50px; text-decoration: none; font-weight: bold; display: inline-block;">
+                <i class="fa-solid fa-home"></i> Volver al Inicio
+            </a>
+        </div>
+    </div>
+    {% else %}
     <div class="sorpresas-intro">
-        <h1>Sorpresa</h1>
-        <p>Elige una experiencia y recibe artículos kawaii seleccionados al azar. La emoción está en descubrir qué te tocó.</p>
+        <span style="display: inline-block; background: #fff0f7; color: var(--kawaii-pink-primary); padding: 4px 14px; border-radius: 9999px; font-weight: 800; font-size: 0.85rem; margin-bottom: 10px; border: 1px solid #f8b4d9;">
+            🎁 EXPERIENCIAS KAWAII
+        </span>
+        <h1>Sorpresas Mágicas</h1>
+        <p>Elige tu experiencia favorita (Lucky Pop, Scoops y más) y recibe figuras y artículos kawaii seleccionados al azar. ¡La emoción está en descubrir qué te tocó! ✨</p>
     </div>
 
     <div class="scoop-grid">
+        {% for sorpresa in sorpresas %}
         <article class="scoop-card">
             <div class="scoop-image-wrap">
-                {% if scoop_normal.get_imagen_url %}
-                    <img class="scoop-image" src="{{ scoop_normal.get_imagen_url }}" alt="{{ scoop_normal.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                {% if sorpresa.get_imagen_url %}
+                    <img class="scoop-image" src="{{ sorpresa.get_imagen_url }}" alt="{{ sorpresa.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
                 {% else %}
                     <img class="scoop-image" src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
                 {% endif %}
 
-                {% if scoop_normal.descuento_porcentaje > 0 %}
-                    <span class="discount-badge-scoop">{{ scoop_normal.descuento_porcentaje|floatformat:0 }}% OFF</span>
+                {% if sorpresa.es_nuevo %}
+                    <span class="badge-nuevo" style="position: absolute; top: 12px; left: 12px; z-index: 2;">✨ Nuevo</span>
+                {% endif %}
+
+                {% if sorpresa.descuento_porcentaje > 0 %}
+                    <span class="discount-badge-scoop">{{ sorpresa.descuento_porcentaje|floatformat:0 }}% OFF</span>
                 {% endif %}
             </div>
 
-            <h2>Scoop Normal</h2>
-            <p>Una cucharada llena de productos sorpresa. Cada scoop contiene figuras y detalles kawaii elegidos al azar.</p>
+            <h2>{{ sorpresa.nombre }}</h2>
+            <p>{{ sorpresa.descripcion|default:"Experiencia llena de figuras, accesorios y detalles kawaii mágicos al azar." }}</p>
             
-            {% if scoop_normal %}
-                <div class="scoop-price-container">
-                    {% if scoop_normal.descuento_porcentaje > 0 %}
-                        <span class="scoop-price-orig">${{ scoop_normal.valor_unitario|floatformat:0 }} COP</span>
-                        <span class="scoop-price">${{ scoop_normal.precio_final|floatformat:0 }} COP</span>
-                    {% else %}
-                        <span class="scoop-price">${{ scoop_normal.valor_unitario|floatformat:0 }} COP</span>
-                    {% endif %}
-                </div>
+            <div class="scoop-price-container">
+                {% if sorpresa.descuento_porcentaje > 0 %}
+                    <span class="scoop-price-orig">${{ sorpresa.valor_unitario|floatformat:0 }} COP</span>
+                    <span class="scoop-price">${{ sorpresa.precio_final|floatformat:0 }} COP</span>
+                {% else %}
+                    <span class="scoop-price">${{ sorpresa.valor_unitario|floatformat:0 }} COP</span>
+                {% endif %}
+            </div>
 
-                {% if cantidad_en_carrito %}
+            {% if sorpresa.stock > 0 %}
+                {% if sorpresa.cant_carrito > 0 %}
                     <div style="margin-top: auto;">
                         <div class="qty-controls">
-                            <form method="post" action="{% url 'quitar_de_carrito' scoop_normal.id %}" style="margin: 0;">
+                            <form method="post" action="{% url 'quitar_de_carrito' sorpresa.id %}" style="margin: 0;">
                                 {% csrf_token %}
-                                <button type="submit">&minus;</button>
+                                <button type="submit" aria-label="Disminuir cantidad">&minus;</button>
                             </form>
 
                             <span class="qty-number">
-                                {{ cantidad_en_carrito }}
+                                {{ sorpresa.cant_carrito }}
                             </span>
 
-                            <form method="post" action="{% url 'agregar_a_carrito' scoop_normal.id %}" style="margin: 0;">
+                            <form method="post" action="{% url 'agregar_a_carrito' sorpresa.id %}" style="margin: 0;">
                                 {% csrf_token %}
-                                <button type="submit">&#43;</button>
+                                <button type="submit" aria-label="Aumentar cantidad">&#43;</button>
                             </form>
                         </div>
-                        <p class="in-cart-label" style="text-align: center;">
-                            En tu carrito
+                        <p class="in-cart-label" style="text-align: center; margin-top: 6px;">
+                            <i class="fa-solid fa-circle-check"></i> En tu carrito
                         </p>
                     </div>
                 {% else %}
-                    <form method="post" action="{% url 'agregar_a_carrito' scoop_normal.id %}" style="margin-top: auto;">
+                    <form method="post" action="{% url 'agregar_a_carrito' sorpresa.id %}" style="margin-top: auto;">
                         {% csrf_token %}
                         <button class="scoop-button" type="submit">
                             <i class="fa-solid fa-gift"></i> Agregar al carrito
@@ -67,21 +92,17 @@
                     </form>
                 {% endif %}
             {% else %}
-                <p class="coming-soon">Disponible después de registrar el producto</p>
+                <p class="coming-soon" style="margin-top: auto;">Agotado temporalmente</p>
             {% endif %}
         </article>
-
-        <article class="scoop-card">
-            <h2>Sorpresa Ruleta</h2>
-            <p>Gira la ruleta y deja que el azar elija tu sorpresa. Cada resultado revela una figura especial para hacer tu pedido aún más divertido.</p>
-            <span class="coming-soon">Próximamente</span>
-        </article>
-
-        <article class="scoop-card">
-            <h2>Sorpresa Bolita</h2>
-            <p>Gira la máquina y descubre las figuras kawaii sorpresas que te puedes llevar.</p>
-            <span class="coming-soon">Próximamente</span>
-        </article>
+        {% empty %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 50px 20px; background: #fff; border-radius: 18px; border: 1px dashed #fae6f2;">
+            <div style="font-size: 3rem; margin-bottom: 12px;">🎁🌸</div>
+            <h3 style="color: #2d2030; font-weight: 700;">Pronto nuevas sorpresas</h3>
+            <p style="color: var(--kawaii-text-muted); font-size: 0.95rem;">Estamos organizando increíbles experiencias para ti.</p>
+        </div>
+        {% endfor %}
     </div>
+    {% endif %}
 </section>
 {% endblock content %}

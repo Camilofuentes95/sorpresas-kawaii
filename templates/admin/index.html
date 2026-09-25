@@ -1,0 +1,40 @@
+{% extends "admin/index.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div class="app-reportes module" style="margin-bottom: 20px;">
+    <table>
+        <caption>
+            <a href="{% url 'admin_metricas_ventas' %}" class="section" title="Reportes y Analítica Financiera">REPORTES Y ANALÍTICA FINANCIERA</a>
+        </caption>
+        <tbody>
+            <tr class="model-metricas">
+                <th scope="row">
+                    <a href="{% url 'admin_metricas_ventas' %}">Métricas y Dashboard de Ventas</a>
+                </th>
+                <td>
+                    <a href="{% url 'admin_metricas_ventas' %}" class="viewlink">Ver</a>
+                </td>
+            </tr>
+            <tr class="model-excel">
+                <th scope="row">
+                    <a href="{% url 'admin_exportar_excel' %}?rango=mes&estado=CONFIRMADOS">Descargar Reporte en Excel (.xlsx)</a>
+                </th>
+                <td>
+                    <a href="{% url 'admin_exportar_excel' %}?rango=mes&estado=CONFIRMADOS" class="changelink">Descargar</a>
+                </td>
+            </tr>
+            <tr class="model-alertas">
+                <th scope="row">
+                    <a href="{% url 'admin_enviar_alerta_stock' %}">Enviar Alerta de Stock Bajo por Correo</a>
+                </th>
+                <td>
+                    <a href="{% url 'admin_enviar_alerta_stock' %}" class="changelink">Enviar Alerta</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+{{ block.super }}
+{% endblock %}

@@ -20,3 +20,20 @@ def carrito_context(request):
     return {
         'carrito_total_items': total_items,
     }
+
+
+def configuracion_tienda_context(request):
+    """
+    Suministra la configuración global de la tienda (activación de checkout,
+    módulo de sorpresas, combos y mensajes de mantenimiento) a todos los templates.
+    """
+    try:
+        from .models import ConfiguracionTienda
+        config = ConfiguracionTienda.get_solo()
+    except Exception:
+        config = None
+
+    return {
+        'config_tienda': config,
+    }
+

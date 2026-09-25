@@ -108,6 +108,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
                 'sorpresas_kawai.context_processors.carrito_context',
+                'sorpresas_kawai.context_processors.configuracion_tienda_context',
             ],
 
         },
@@ -188,3 +189,5 @@ ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', EMAIL_HOST_USER)
 # Configuración de contacto por WhatsApp para confirmación de pedidos
 WHATSAPP_PHONE_NUMBER = os.environ.get('WHATSAPP_PHONE_NUMBER', '573222385508')
 
+# Control de disponibilidad para finalizar compras (False = deshabilitado, True = habilitado)
+FINALIZAR_COMPRA_HABILITADO = True
