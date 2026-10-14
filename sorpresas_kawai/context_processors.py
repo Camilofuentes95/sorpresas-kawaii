@@ -1,11 +1,19 @@
+"""
+Procesadores de Contexto Globales - Sorpresas Kawaii.
+
+Inyectan variables globales en el contexto de renderizado de todas las plantillas HTML:
+- Conteo en tiempo real de articulos en el carrito de compras.
+- Parametros globales de disponibilidad de la tienda (ConfiguracionTienda).
+"""
+
 from django.db.models import Sum
 from .models import ItemCarrito
 
 
 def carrito_context(request):
     """
-    Context processor para suministrar la cantidad total de artículos
-    en el carrito a todas las plantillas y vistas del sistema.
+    Calcula y suministra de forma global la variable 'carrito_total_items'
+    para actualizar la insignia numerica en la barra de navegacion (navbar).
     """
     total_items = 0
     if request.user.is_authenticated:
@@ -24,8 +32,9 @@ def carrito_context(request):
 
 def configuracion_tienda_context(request):
     """
-    Suministra la configuración global de la tienda (activación de checkout,
-    módulo de sorpresas, combos y mensajes de mantenimiento) a todos los templates.
+    Suministra la instancia singleton de configuracion global ('config_tienda')
+    a todas las plantillas para verificar el estado de los interruptores de mantenimiento
+    y las politicas de envio en tiempo real.
     """
     try:
         from .models import ConfiguracionTienda
@@ -36,4 +45,3 @@ def configuracion_tienda_context(request):
     return {
         'config_tienda': config,
     }
-
