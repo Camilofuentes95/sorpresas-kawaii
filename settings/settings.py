@@ -35,26 +35,20 @@ if allowed_hosts_env:
 else:
     ALLOWED_HOSTS = ['*']
 
-render_external_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if render_external_hostname and render_external_hostname not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(render_external_hostname)
-
-# Orígenes confiables para CSRF en producción y pruebas por túnel
+# Orígenes confiables para CSRF
 CSRF_TRUSTED_ORIGINS = [
-    'https://*.onrender.com',
-    'https://*.lhr.life',
-    'http://*.lhr.life',
-    'https://*.localhost.run',
-    'https://*.loca.lt',
-    'https://*.ngrok-free.app',
-    'https://*.ngrok.app',
-    'https://*.ngrok.io',
-    'https://*.pinggy.link',
-    'https://*.trycloudflare.com',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
 
+
+# Configuraciones de seguridad para cookies y gestión de sesiones
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = 86400  # 24 horas (en lugar de las 2 semanas por defecto)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 # Configuraciones de seguridad para entorno de producción
 if not DEBUG:
@@ -89,6 +83,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'sorpresas_kawai.middleware.SessionSecurityMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
