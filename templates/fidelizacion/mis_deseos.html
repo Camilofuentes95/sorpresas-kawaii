@@ -35,21 +35,27 @@
             </form>
 
             <div class="product-card-body">
-                <div class="product-image">
-                    {% if item.get_imagen_url %}
-                        <img src="{{ item.get_imagen_url }}" alt="{{ item.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
-                    {% else %}
-                        <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
-                    {% endif %}
+                {% if tipo == 'producto' %}
+                <a href="{% url 'detalle_producto' item.id %}" class="product-img-link" title="Ver detalle de {{ item.nombre }}">
+                {% else %}
+                <a href="{% url 'detalle_combo' item.id %}" class="product-img-link" title="Ver detalle de {{ item.nombre }}">
+                {% endif %}
+                    <div class="product-image">
+                        {% if item.get_imagen_url %}
+                            <img src="{{ item.get_imagen_url }}" alt="{{ item.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                        {% else %}
+                            <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+                        {% endif %}
 
-                    {% if item.es_nuevo %}
-                        <span class="badge-nuevo"><i class="fa-solid fa-sparkles"></i> Nuevo</span>
-                    {% endif %}
+                        {% if item.es_nuevo %}
+                            <span class="badge-nuevo"><i class="fa-solid fa-sparkles"></i> Nuevo</span>
+                        {% endif %}
 
-                    {% if item.descuento_porcentaje > 0 %}
-                        <span class="discount-badge">{{ item.descuento_porcentaje|floatformat:0 }}% OFF</span>
-                    {% endif %}
-                </div>
+                        {% if item.descuento_porcentaje > 0 %}
+                            <span class="discount-badge">{{ item.descuento_porcentaje|floatformat:0 }}% OFF</span>
+                        {% endif %}
+                    </div>
+                </a>
 
                 <!-- Nombre enlazado al detalle -->
                 {% if tipo == 'producto' %}

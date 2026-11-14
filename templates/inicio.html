@@ -168,25 +168,29 @@
                             <i class="{{ producto.badge_icon|default:'fa-solid fa-fire' }}"></i> {{ producto.badge_text|default:'Top Venta' }}
                         </div>
 
-                        <div class="product-thumb">
-                            {% if producto.get_imagen_url %}
-                            <img src="{{ producto.get_imagen_url }}" alt="{{ producto.nombre }}"
-                                onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
-                            {% else %}
-                            <img src="{% static 'img/placeholder.png' %}" alt="Producto Kawaii">
-                            {% endif %}
+                        <a href="{% url 'detalle_producto' producto.id %}" class="product-img-link" title="Ver detalle de {{ producto.nombre }}">
+                            <div class="product-thumb">
+                                {% if producto.get_imagen_url %}
+                                <img src="{{ producto.get_imagen_url }}" alt="{{ producto.nombre }}"
+                                    onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                                {% else %}
+                                <img src="{% static 'img/placeholder.png' %}" alt="Producto Kawaii">
+                                {% endif %}
 
-                            {% if producto.descuento_porcentaje and producto.descuento_porcentaje > 0 %}
-                            <span class="badge-discount">-{{ producto.descuento_porcentaje|floatformat:0 }}%</span>
-                            {% endif %}
-                        </div>
+                                {% if producto.descuento_porcentaje and producto.descuento_porcentaje > 0 %}
+                                <span class="badge-discount">-{{ producto.descuento_porcentaje|floatformat:0 }}%</span>
+                                {% endif %}
+                            </div>
+                        </a>
 
                         <div class="product-details">
                             <span class="product-category-label">
                                 {% if producto.id_categoria %}{{ producto.id_categoria.nombre }}{% else %}Colección
                                 Kawaii{% endif %}
                             </span>
-                            <h3 class="product-card-title">{{ producto.nombre }}</h3>
+                            <a href="{% url 'detalle_producto' producto.id %}" class="product-link" title="Ver detalle de {{ producto.nombre }}">
+                                <h3 class="product-card-title">{{ producto.nombre }}</h3>
+                            </a>
 
                             <div class="product-pricing">
                                 {% if producto.descuento_porcentaje and producto.descuento_porcentaje > 0 %}
@@ -244,23 +248,27 @@
                             <i class="{{ combo.badge_icon|default:'fa-solid fa-wand-magic-sparkles' }}"></i> {{ combo.badge_text|default:'Top Combo' }}
                         </div>
 
-                        <div class="product-thumb">
-                            {% if combo.get_imagen_url %}
-                            <img src="{{ combo.get_imagen_url }}" alt="{{ combo.nombre }}"
-                                onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
-                            {% else %}
-                            <img src="{% static 'img/placeholder.png' %}" alt="Combo Kawaii">
-                            {% endif %}
+                        <a href="{% url 'detalle_combo' combo.id %}" class="product-img-link" title="Ver detalle de {{ combo.nombre }}">
+                            <div class="product-thumb">
+                                {% if combo.get_imagen_url %}
+                                <img src="{{ combo.get_imagen_url }}" alt="{{ combo.nombre }}"
+                                    onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                                {% else %}
+                                <img src="{% static 'img/placeholder.png' %}" alt="Combo Kawaii">
+                                {% endif %}
 
-                            {% if combo.descuento_porcentaje and combo.descuento_porcentaje > 0 %}
-                            <span class="badge-discount">-{{ combo.descuento_porcentaje|floatformat:0 }}%</span>
-                            {% endif %}
-                        </div>
+                                {% if combo.descuento_porcentaje and combo.descuento_porcentaje > 0 %}
+                                <span class="badge-discount">-{{ combo.descuento_porcentaje|floatformat:0 }}%</span>
+                                {% endif %}
+                            </div>
+                        </a>
 
                         <div class="product-details">
                             <span class="product-category-label" style="color: var(--kawaii-purple-main);">Combos
                                 Especiales</span>
-                            <h3 class="product-card-title">{{ combo.nombre }}</h3>
+                            <a href="{% url 'detalle_combo' combo.id %}" class="product-link" title="Ver detalle de {{ combo.nombre }}">
+                                <h3 class="product-card-title">{{ combo.nombre }}</h3>
+                            </a>
 
                             <div class="product-pricing">
                                 {% if combo.descuento_porcentaje and combo.descuento_porcentaje > 0 %}

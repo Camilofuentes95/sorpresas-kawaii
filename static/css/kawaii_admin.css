@@ -3363,16 +3363,22 @@ a {
     text-decoration: none;
     color: inherit;
     display: block;
+    cursor: pointer;
 }
 
 .product-link:hover .product-name,
-.product-link:hover h2 {
+.product-link:hover .product-card-title,
+.product-link:hover h2,
+.product-link:hover h3 {
     color: var(--kawaii-pink-primary);
+    transition: color 0.2s ease;
 }
 
 .product-img-link {
     display: block;
     text-decoration: none;
+    color: inherit;
+    cursor: pointer;
 }
 
 /* 2. Vista Detalle de Producto / Combo */

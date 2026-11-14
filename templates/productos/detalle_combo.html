@@ -98,7 +98,10 @@
                 <ul style="list-style: none; padding: 0; margin: 0;">
                     {% for cp in items_combo %}
                     <li style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fae6f2; font-size: 0.9rem;">
-                        <span><strong style="color: #e94fa3;">{{ cp.cantidad }}x</strong> {{ cp.producto.nombre }}</span>
+                        <a href="{% url 'detalle_producto' cp.producto.id %}" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 6px;" title="Ver detalle de {{ cp.producto.nombre }}">
+                            <span><strong style="color: #e94fa3;">{{ cp.cantidad }}x</strong> {{ cp.producto.nombre }}</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.75rem; color: #d094c4;"></i>
+                        </a>
                         {% if cp.producto.id_categoria %}
                             <small style="color: #9a8d9f; background: #fff; padding: 2px 8px; border-radius: 12px;">{{ cp.producto.id_categoria.nombre }}</small>
                         {% endif %}

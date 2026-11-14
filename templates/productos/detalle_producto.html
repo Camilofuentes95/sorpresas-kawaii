@@ -351,14 +351,16 @@
             {% for rel in relacionados %}
             <div class="product-card">
                 <div class="product-card-body">
-                    <div class="product-image">
-                        {% if rel.get_imagen_url %}
-                            <img src="{{ rel.get_imagen_url }}" alt="{{ rel.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
-                        {% else %}
-                            <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
-                        {% endif %}
-                    </div>
-                    <a href="{% url 'detalle_producto' rel.id %}" class="product-link">
+                    <a href="{% url 'detalle_producto' rel.id %}" class="product-img-link" title="Ver detalle de {{ rel.nombre }}">
+                        <div class="product-image">
+                            {% if rel.get_imagen_url %}
+                                <img src="{{ rel.get_imagen_url }}" alt="{{ rel.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                            {% else %}
+                                <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+                            {% endif %}
+                        </div>
+                    </a>
+                    <a href="{% url 'detalle_producto' rel.id %}" class="product-link" title="Ver detalle de {{ rel.nombre }}">
                         <p class="product-name">{{ rel.nombre }}</p>
                     </a>
                     <div class="price-container">
