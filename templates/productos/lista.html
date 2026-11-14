@@ -46,23 +46,55 @@
     <div class="product-grid">
         {% for producto in productos %}
         <div class="product-card">
+            <!-- Botón de Favorito Flotante -->
+            {% if user.is_authenticated %}
+                <button type="button" class="btn-card-wishlist {% if producto.id|stringformat:'s' in deseos_producto_ids %}active{% endif %}" onclick="toggleCardWishlist('producto', '{{ producto.id }}', this)" title="Guardar en favoritos">
+                    <i class="fa-{% if producto.id|stringformat:'s' in deseos_producto_ids %}solid{% else %}regular{% endif %} fa-heart"></i>
+                </button>
+            {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="btn-card-wishlist" title="Inicia sesión para guardar">
+                    <i class="fa-regular fa-heart"></i>
+                </a>
+            {% endif %}
+
             <div class="product-card-body">
-                <div class="product-image">
-                    {% if producto.get_imagen_url %}
-                        <img src="{{ producto.get_imagen_url }}" alt="{{ producto.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
-                    {% else %}
-                        <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
-                    {% endif %}
+                <a href="{% url 'detalle_producto' producto.id %}" class="product-img-link">
+                    <div class="product-image">
+                        {% if producto.get_imagen_url %}
+                            <img src="{{ producto.get_imagen_url }}" alt="{{ producto.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                        {% else %}
+                            <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+                        {% endif %}
 
-                    {% if producto.es_nuevo %}
-                        <span class="badge-nuevo"><i class="fa-solid fa-sparkles"></i> Nuevo</span>
-                    {% endif %}
+                        {% if producto.es_nuevo %}
+                            <span class="badge-nuevo"><i class="fa-solid fa-sparkles"></i> Nuevo</span>
+                        {% endif %}
 
-                    {% if producto.descuento_porcentaje > 0 %}
-                        <span class="discount-badge">{{ producto.descuento_porcentaje|floatformat:0 }}% OFF</span>
-                    {% endif %}
+                        {% if producto.descuento_porcentaje > 0 %}
+                            <span class="discount-badge">{{ producto.descuento_porcentaje|floatformat:0 }}% OFF</span>
+                        {% endif %}
+                    </div>
+                </a>
+
+                <a href="{% url 'detalle_producto' producto.id %}" class="product-link">
+                    <p class="product-name">{{ producto.nombre }}</p>
+                </a>
+
+                <!-- Estrellas y rating -->
+                <div class="product-stars-row">
+                    <div class="stars-gold">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= producto.estrellas_enteras %}
+                                <i class="fa-solid fa-star"></i>
+                            {% elif forloop.counter == producto.estrellas_enteras|add:1 and producto.tiene_media_estrella %}
+                                <i class="fa-solid fa-star-half-stroke"></i>
+                            {% else %}
+                                <i class="fa-regular fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="review-count">({{ producto.total_resenas }})</span>
                 </div>
-                <p class="product-name">{{ producto.nombre }}</p>
 
                 <div class="price-container">
                     {% if producto.descuento_porcentaje > 0 %}
@@ -139,4 +171,37 @@
     </section>
     {% endif %}
 </div>
+
+<script>
+function toggleCardWishlist(tipo, itemId, btnElement) {
+    const url = `/favoritos/toggle/${tipo}/${itemId}/?format=json`;
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            const icon = btnElement.querySelector('i');
+            if (data.agregado) {
+                btnElement.classList.add('active');
+                if (icon) { icon.classList.remove('fa-regular'); icon.classList.add('fa-solid'); }
+            } else {
+                btnElement.classList.remove('active');
+                if (icon) { icon.classList.remove('fa-solid'); icon.classList.add('fa-regular'); }
+            }
+            const navBadge = document.getElementById('nav-wishlist-badge');
+            if (navBadge) {
+                navBadge.innerText = data.total_deseos;
+                navBadge.style.display = data.total_deseos > 0 ? 'inline-flex' : 'none';
+            }
+        }
+    })
+    .catch(err => console.error(err));
+}
+</script>
 {% endblock content %}

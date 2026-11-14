@@ -29,25 +29,56 @@
 
     <div class="combo-grid">
         {% for combo in combos %}
-        <div class="combo-card">
-            <div class="combo-image">
-                {% if combo.get_imagen_url %}
-                    <img src="{{ combo.get_imagen_url }}" alt="{{ combo.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
-                {% else %}
-                    <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
-                {% endif %}
+        <div class="combo-card" style="position: relative;">
+            <!-- Botón de Favorito Flotante -->
+            {% if user.is_authenticated %}
+                <button type="button" class="btn-card-wishlist {% if combo.id|stringformat:'s' in deseos_combo_ids %}active{% endif %}" onclick="toggleCardWishlist('combo', '{{ combo.id }}', this)" title="Guardar combo en favoritos">
+                    <i class="fa-{% if combo.id|stringformat:'s' in deseos_combo_ids %}solid{% else %}regular{% endif %} fa-heart"></i>
+                </button>
+            {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="btn-card-wishlist" title="Inicia sesión para guardar">
+                    <i class="fa-regular fa-heart"></i>
+                </a>
+            {% endif %}
 
-                {% if combo.es_nuevo %}
-                    <span class="badge-nuevo"><i class="fa-solid fa-sparkles"></i> Nuevo</span>
-                {% endif %}
+            <a href="{% url 'detalle_combo' combo.id %}" class="product-img-link">
+                <div class="combo-image">
+                    {% if combo.get_imagen_url %}
+                        <img src="{{ combo.get_imagen_url }}" alt="{{ combo.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                    {% else %}
+                        <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+                    {% endif %}
 
-                {% if combo.descuento_porcentaje > 0 %}
-                    <span class="discount-badge">{{ combo.descuento_porcentaje|floatformat:0 }}% OFF</span>
-                {% endif %}
-            </div>
+                    {% if combo.es_nuevo %}
+                        <span class="badge-nuevo"><i class="fa-solid fa-sparkles"></i> Nuevo</span>
+                    {% endif %}
+
+                    {% if combo.descuento_porcentaje > 0 %}
+                        <span class="discount-badge">{{ combo.descuento_porcentaje|floatformat:0 }}% OFF</span>
+                    {% endif %}
+                </div>
+            </a>
 
             <div class="combo-card-body">
-                <p class="combo-name">{{ combo.nombre }}</p>
+                <a href="{% url 'detalle_combo' combo.id %}" class="product-link">
+                    <p class="combo-name">{{ combo.nombre }}</p>
+                </a>
+
+                <!-- Estrellas y rating -->
+                <div class="product-stars-row">
+                    <div class="stars-gold">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= combo.estrellas_enteras %}
+                                <i class="fa-solid fa-star"></i>
+                            {% elif forloop.counter == combo.estrellas_enteras|add:1 and combo.tiene_media_estrella %}
+                                <i class="fa-solid fa-star-half-stroke"></i>
+                            {% else %}
+                                <i class="fa-regular fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="review-count">({{ combo.total_resenas }})</span>
+                </div>
 
                 {% if combo.descripcion %}
                     <p class="combo-description">{{ combo.descripcion }}</p>
@@ -128,10 +159,43 @@
     {% endif %}
     {% else %}
     <section class="empty-catalog">
-        <h1>Combos Disponibles</h1>
+        <h1>Combos Promocionales</h1>
         <p>No hay combos disponibles en este momento.</p>
         <a href="{% url 'inicio' %}"><i class="fa-solid fa-arrow-left"></i> Volver al inicio</a>
     </section>
     {% endif %}
 </div>
+
+<script>
+function toggleCardWishlist(tipo, itemId, btnElement) {
+    const url = `/favoritos/toggle/${tipo}/${itemId}/?format=json`;
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            const icon = btnElement.querySelector('i');
+            if (data.agregado) {
+                btnElement.classList.add('active');
+                if (icon) { icon.classList.remove('fa-regular'); icon.classList.add('fa-solid'); }
+            } else {
+                btnElement.classList.remove('active');
+                if (icon) { icon.classList.remove('fa-solid'); icon.classList.add('fa-regular'); }
+            }
+            const navBadge = document.getElementById('nav-wishlist-badge');
+            if (navBadge) {
+                navBadge.innerText = data.total_deseos;
+                navBadge.style.display = data.total_deseos > 0 ? 'inline-flex' : 'none';
+            }
+        }
+    })
+    .catch(err => console.error(err));
+}
+</script>
 {% endblock content %}

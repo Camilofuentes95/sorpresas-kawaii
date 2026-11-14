@@ -4,6 +4,7 @@ Procesadores de Contexto Globales - Sorpresas Kawaii.
 Inyectan variables globales en el contexto de renderizado de todas las plantillas HTML:
 - Conteo en tiempo real de articulos en el carrito de compras.
 - Parametros globales de disponibilidad de la tienda (ConfiguracionTienda).
+- Estado global de Lista de Deseos / Favoritos.
 """
 
 from django.db.models import Sum
@@ -44,4 +45,35 @@ def configuracion_tienda_context(request):
 
     return {
         'config_tienda': config,
+    }
+
+
+def fidelizacion_y_deseos_context(request):
+    """
+    Inyecta datos globales de la lista de deseos:
+    - deseos_total_items: cantidad de articulos favoritos guardados.
+    - deseos_producto_ids: conjunto de IDs de productos guardados para pintar corazones activos en catalogos.
+    - deseos_combo_ids: conjunto de IDs de combos guardados en favoritos.
+    """
+    deseos_total = 0
+    deseos_producto_ids = set()
+    deseos_combo_ids = set()
+
+    if request.user.is_authenticated:
+        try:
+            from .models import ListaDeseos
+            items_deseos = ListaDeseos.objects.filter(usuario=request.user).values('producto_id', 'combo_id')
+            deseos_total = len(items_deseos)
+            for d in items_deseos:
+                if d['producto_id']:
+                    deseos_producto_ids.add(str(d['producto_id']))
+                if d['combo_id']:
+                    deseos_combo_ids.add(str(d['combo_id']))
+        except Exception:
+            pass
+
+    return {
+        'deseos_total_items': deseos_total,
+        'deseos_producto_ids': deseos_producto_ids,
+        'deseos_combo_ids': deseos_combo_ids,
     }

@@ -3258,3 +3258,1507 @@ a {
     }
 }
 
+
+
+/* ==========================================================================
+   MODULO 1: ESTILOS DE FIDELIZACION, RESENAS Y LISTA DE DESEOS (KAWAII CLUB)
+   ========================================================================== */
+
+/* 1. Botones de Favorito (Wishlist) */
+.btn-card-wishlist {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--kawaii-border-soft);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff529a;
+    font-size: 1.15rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(233, 79, 163, 0.15);
+    z-index: 5;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s;
+    text-decoration: none;
+}
+
+.btn-card-wishlist:hover {
+    transform: scale(1.15);
+    background: #fff0f7;
+    color: #e94fa3;
+}
+
+.btn-card-wishlist.active {
+    background: #ff529a;
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(255, 82, 154, 0.4);
+}
+
+.btn-wishlist-hero {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid var(--kawaii-border-soft);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff529a;
+    font-size: 1.3rem;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(233, 79, 163, 0.2);
+    z-index: 5;
+    transition: all 0.25s ease;
+    text-decoration: none;
+}
+
+.btn-wishlist-hero:hover {
+    transform: scale(1.12);
+    background: #fff0f7;
+}
+
+.btn-wishlist-hero.active {
+    background: #ff529a;
+    color: #ffffff;
+    box-shadow: 0 6px 20px rgba(255, 82, 154, 0.45);
+}
+
+/* Rating Stars */
+.product-stars-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0 8px 0;
+}
+
+.stars-gold {
+    color: #ffb800;
+    font-size: 0.85rem;
+    display: inline-flex;
+    gap: 2px;
+}
+
+.stars-gold-lg {
+    color: #ffb800;
+    font-size: 1.35rem;
+    display: inline-flex;
+    gap: 3px;
+}
+
+.review-count {
+    font-size: 0.8rem;
+    color: var(--kawaii-text-muted);
+    font-weight: 500;
+}
+
+/* Enlaces en productos */
+.product-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.product-link:hover .product-name,
+.product-link:hover h2 {
+    color: var(--kawaii-pink-primary);
+}
+
+.product-img-link {
+    display: block;
+    text-decoration: none;
+}
+
+/* 2. Vista Detalle de Producto / Combo */
+.product-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 20px 60px 20px;
+}
+
+.breadcrumb-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    color: var(--kawaii-text-muted);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.breadcrumb-nav a {
+    color: var(--kawaii-text-muted);
+    text-decoration: none;
+}
+
+.breadcrumb-nav a:hover {
+    color: var(--kawaii-pink-primary);
+}
+
+.breadcrumb-nav span.active {
+    color: var(--kawaii-pink-primary);
+    font-weight: 600;
+}
+
+.product-hero-card {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 40px;
+    background: #ffffff;
+    border-radius: var(--radius-lg);
+    padding: 36px;
+    box-shadow: 0 10px 30px rgba(233, 79, 163, 0.08);
+    border: 1px solid var(--kawaii-border-soft);
+    margin-bottom: 40px;
+}
+
+@media (max-width: 868px) {
+    .product-hero-card {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        padding: 20px;
+    }
+}
+
+.main-image-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff8fc;
+    border: 1px solid var(--kawaii-border-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.main-product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.main-image-wrap:hover .main-product-img {
+    transform: scale(1.04);
+}
+
+.product-info-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.category-pill {
+    align-self: flex-start;
+    background: #fff0f7;
+    color: var(--kawaii-pink-primary);
+    border: 1px solid #f8b4d9;
+    padding: 4px 14px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.product-title {
+    font-size: 2rem;
+    color: #2d2030;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 12px;
+}
+
+.detail-stars-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    font-size: 0.95rem;
+}
+
+.rating-number {
+    font-weight: 700;
+    color: #2d2030;
+}
+
+.rating-reviews-link {
+    color: var(--kawaii-text-muted);
+    text-decoration: none;
+    border-bottom: 1px dashed #d63a8f;
+    transition: color 0.2s;
+}
+
+.rating-reviews-link:hover {
+    color: var(--kawaii-pink-primary);
+}
+
+.detail-pricing-box {
+    background: #fdf5fa;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    border: 1px solid #fae6f2;
+}
+
+.orig-price-wrap {
+    display: flex;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--kawaii-text-muted);
+    margin-bottom: 4px;
+}
+
+.orig-value {
+    text-decoration: line-through;
+}
+
+.final-price-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.final-price {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--kawaii-pink-primary);
+}
+
+.save-tag {
+    background: #e2f9f3;
+    color: #0d8a68;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.stock-status-row {
+    margin-bottom: 16px;
+}
+
+.stock-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+.stock-tag.in-stock {
+    background: #e6f9f0;
+    color: #1a8754;
+}
+
+.stock-tag.out-of-stock {
+    background: #feecef;
+    color: #dc3545;
+}
+
+.product-description-text {
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--kawaii-text-muted);
+    margin-bottom: 24px;
+}
+
+.detail-actions-box {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 26px;
+    flex-wrap: wrap;
+}
+
+.detail-add-form {
+    flex: 1;
+    min-width: 200px;
+}
+
+.btn-detail-add-cart {
+    width: 100%;
+    background: linear-gradient(135deg, #ff70af 0%, #e94fa3 100%);
+    color: #ffffff;
+    border: none;
+    padding: 14px 24px;
+    border-radius: 50px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(233, 79, 163, 0.28);
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-detail-add-cart:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(233, 79, 163, 0.38);
+}
+
+.btn-detail-add-cart.disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-detail-wishlist {
+    background: #fff;
+    border: 2px solid #ffd1dc;
+    color: var(--kawaii-pink-primary);
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-detail-wishlist:hover {
+    background: #fff0f7;
+    border-color: var(--kawaii-pink-primary);
+}
+
+.btn-detail-wishlist.active {
+    background: #ff529a;
+    color: #ffffff;
+    border-color: #ff529a;
+}
+
+.trust-perks-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    border-top: 1px solid var(--kawaii-border-soft);
+    padding-top: 20px;
+}
+
+@media (max-width: 600px) {
+    .trust-perks-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.trust-perk-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: var(--kawaii-text-muted);
+}
+
+.trust-perk-item i {
+    font-size: 1.3rem;
+    color: var(--kawaii-pink-primary);
+}
+
+.trust-perk-item strong {
+    display: block;
+    color: #2d2030;
+    font-size: 0.85rem;
+}
+
+/* 3. Sección de Reseñas y Comentarios */
+.reviews-section-card {
+    background: #ffffff;
+    border-radius: var(--radius-lg);
+    padding: 36px;
+    box-shadow: 0 8px 30px rgba(233, 79, 163, 0.08);
+    border: 1px solid var(--kawaii-border-soft);
+    margin-bottom: 40px;
+}
+
+@media (max-width: 768px) {
+    .reviews-section-card {
+        padding: 20px;
+    }
+}
+
+.reviews-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.reviews-pill-tag {
+    display: inline-block;
+    background: #fff0f7;
+    color: var(--kawaii-pink-primary);
+    border: 1px solid #f8b4d9;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    margin-bottom: 6px;
+}
+
+.btn-write-review-jump {
+    background: #8c52ff;
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(140, 82, 255, 0.25);
+    transition: all 0.2s;
+}
+
+.btn-write-review-jump:hover {
+    background: #7a3ee6;
+    transform: translateY(-2px);
+}
+
+.reviews-analytics-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr 280px;
+    gap: 30px;
+    align-items: center;
+    background: #faf5fc;
+    padding: 24px;
+    border-radius: 20px;
+    border: 1px solid #f0e2f5;
+    margin-bottom: 36px;
+}
+
+@media (max-width: 900px) {
+    .reviews-analytics-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+.analytics-overall {
+    text-align: center;
+}
+
+.big-score {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: #2d2030;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.score-sub {
+    font-size: 0.85rem;
+    color: var(--kawaii-text-muted);
+    margin-top: 6px;
+}
+
+.analytics-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+}
+
+.bar-star-label {
+    width: 40px;
+    font-weight: 600;
+    color: #2d2030;
+}
+
+.bar-track {
+    flex: 1;
+    height: 10px;
+    background: #eaddf0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff70af, #ffb800);
+    border-radius: 10px;
+    transition: width 0.4s ease;
+}
+
+.bar-count-label {
+    width: 65px;
+    text-align: right;
+    color: var(--kawaii-text-muted);
+    font-size: 0.8rem;
+}
+
+.analytics-incentive {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 16px 20px;
+    border: 1px dashed #e94fa3;
+    text-align: center;
+}
+
+.incentive-icon {
+    font-size: 1.8rem;
+    margin-bottom: 6px;
+}
+
+.analytics-incentive h4 {
+    color: var(--kawaii-pink-primary);
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.analytics-incentive p {
+    font-size: 0.82rem;
+    color: var(--kawaii-text-muted);
+    line-height: 1.4;
+}
+
+/* Formulario de Reseña */
+.write-review-box {
+    background: #ffffff;
+    border: 2px dashed #ffd1dc;
+    border-radius: 20px;
+    padding: 26px;
+    margin-bottom: 36px;
+}
+
+.write-review-box h3 {
+    font-size: 1.25rem;
+    color: #2d2030;
+    margin-bottom: 18px;
+    font-weight: 700;
+}
+
+.review-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-group-rating {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.form-group-rating label {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #2d2030;
+}
+
+/* Star rating selector radio */
+.star-rating-picker {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: 4px;
+}
+
+.star-rating-picker input {
+    display: none;
+}
+
+.star-rating-picker label {
+    font-size: 1.8rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.star-rating-picker label:hover,
+.star-rating-picker label:hover ~ label,
+.star-rating-picker input:checked ~ label {
+    color: #ffb800;
+}
+
+.form-group-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group-field label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2d2030;
+}
+
+.kawaii-input, .kawaii-textarea {
+    width: 100%;
+    border: 1.5px solid #fae6f2;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--kawaii-text-main);
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.kawaii-input:focus, .kawaii-textarea:focus {
+    border-color: var(--kawaii-pink-primary);
+    box-shadow: 0 0 0 3px rgba(233, 79, 163, 0.12);
+}
+
+.kawaii-file-input {
+    font-size: 0.88rem;
+    color: var(--kawaii-text-muted);
+}
+
+.file-note {
+    font-size: 0.8rem;
+    color: var(--kawaii-text-muted);
+}
+
+.file-note a {
+    color: var(--kawaii-pink-primary);
+}
+
+.form-submit-row {
+    margin-top: 8px;
+}
+
+.btn-submit-review {
+    background: linear-gradient(135deg, #e94fa3 0%, #8c52ff 100%);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(233, 79, 163, 0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.25s;
+}
+
+.btn-submit-review:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(233, 79, 163, 0.35);
+}
+
+.login-to-review-alert {
+    background: #fff0f7;
+    border: 1px solid #ffd1dc;
+    border-radius: 12px;
+    padding: 16px;
+    color: #6a0f6a;
+    font-size: 0.95rem;
+}
+
+.login-to-review-alert a {
+    color: var(--kawaii-pink-primary);
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+/* Stream de Reseñas */
+.reviews-cards-stream {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 20px;
+}
+
+.review-item-card {
+    background: #faf7fc;
+    border: 1px solid #f0e6f5;
+    border-radius: 18px;
+    padding: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.review-item-card:hover {
+    background: #ffffff;
+    box-shadow: 0 6px 20px rgba(233, 79, 163, 0.08);
+}
+
+.review-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.reviewer-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.reviewer-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffd1dc, #e94fa3);
+    color: white;
+    font-weight: 800;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reviewer-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #2d2030;
+    margin: 0;
+}
+
+.review-date {
+    font-size: 0.78rem;
+    color: var(--kawaii-text-muted);
+}
+
+.verified-badge {
+    background: #e6f9f0;
+    color: #0e8549;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.review-stars-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.review-card-title {
+    font-size: 0.95rem;
+    color: #2d2030;
+}
+
+.review-text-content {
+    font-size: 0.92rem;
+    color: #554457;
+    line-height: 1.55;
+    margin-bottom: 12px;
+}
+
+.review-photo-wrap {
+    margin-top: 10px;
+    display: inline-block;
+}
+
+.btn-review-thumb-modal {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    position: relative;
+    display: inline-block;
+    border-radius: 12px;
+}
+
+.review-customer-thumbnail {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 2px solid #ffd1dc;
+    display: block;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-review-thumb-modal:hover .review-customer-thumbnail {
+    transform: scale(1.05);
+    box-shadow: 0 4px 14px rgba(233, 79, 163, 0.35);
+}
+
+.btn-review-thumb-modal .thumb-zoom-icon {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #ffffff;
+    font-size: 10px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    pointer-events: none;
+    transition: background 0.2s ease;
+}
+
+.btn-review-thumb-modal:hover .thumb-zoom-icon {
+    background: var(--kawaii-pink-primary);
+}
+
+/* Modal Lightbox para fotos de reseñas */
+.review-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(20, 10, 25, 0.85);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.review-modal-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+    animation: zoomInModal 0.2s ease-out;
+}
+
+@keyframes zoomInModal {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.review-modal-img {
+    max-width: 82vw;
+    max-height: 78vh;
+    object-fit: contain;
+    border-radius: 12px;
+    display: block;
+}
+
+.review-modal-caption {
+    margin: 10px 0 2px 0;
+    font-size: 0.92rem;
+    color: #4a3e4e;
+    font-weight: 600;
+    text-align: center;
+}
+
+.review-modal-close {
+    position: absolute;
+    top: -14px;
+    right: -14px;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #ff70af 0%, #e94fa3 100%);
+    color: #ffffff;
+    border: 2.5px solid #ffffff;
+    border-radius: 50%;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    transition: transform 0.15s ease, background 0.15s ease;
+    line-height: 1;
+    z-index: 10;
+}
+
+.review-modal-close:hover {
+    transform: scale(1.15);
+    background: #e94fa3;
+}
+
+.no-reviews-box {
+    text-align: center;
+    padding: 30px;
+    color: var(--kawaii-text-muted);
+    font-size: 0.95rem;
+}
+
+/* 4. Lista de Deseos (Wishlist Page) */
+.wishlist-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px 60px 20px;
+}
+
+.wishlist-header {
+    text-align: center;
+    max-width: 680px;
+    margin: 0 auto 30px auto;
+}
+
+.wishlist-badge-pill {
+    display: inline-block;
+    background: #fff0f7;
+    color: #e94fa3;
+    padding: 4px 14px;
+    border-radius: 9999px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    border: 1px solid #ffd1dc;
+    margin-bottom: 10px;
+}
+
+.wishlist-header h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #2d2030;
+    margin-bottom: 8px;
+}
+
+.wishlist-count-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    padding: 14px 22px;
+    border-radius: 16px;
+    border: 1px solid var(--kawaii-border-soft);
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.95rem;
+}
+
+.btn-continue-shopping {
+    color: var(--kawaii-pink-primary);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wishlist-card {
+    position: relative;
+}
+
+.btn-remove-wishlist-form {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+}
+
+.btn-remove-wishlist {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ffd1dc;
+    color: #ff529a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.btn-remove-wishlist:hover {
+    background: #ff529a;
+    color: white;
+    transform: scale(1.1);
+}
+
+.wishlist-action-wrap {
+    margin-top: auto;
+    width: 100%;
+}
+
+.empty-wishlist-box {
+    text-align: center;
+    padding: 60px 20px;
+    background: #fff;
+    border-radius: 24px;
+    border: 2px dashed #ffd1dc;
+    max-width: 600px;
+    margin: 40px auto;
+}
+
+.empty-icon-pulse {
+    font-size: 3.5rem;
+    animation: pulse 2s infinite;
+    margin-bottom: 14px;
+}
+
+/* 5. Membresía y Fidelización (Kawaii Club) */
+.fidelizacion-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 30px 20px 60px 20px;
+}
+
+.club-header {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 36px auto;
+}
+
+.club-pill-tag {
+    display: inline-block;
+    background: #f6f0ff;
+    color: #8c52ff;
+    border: 1px solid #d8c2ff;
+    padding: 4px 14px;
+    border-radius: 9999px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.club-header h1 {
+    font-size: 2.3rem;
+    font-weight: 800;
+    color: #2d2030;
+    margin-bottom: 8px;
+}
+
+.club-header p {
+    color: var(--kawaii-text-muted);
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+
+/* Tarjeta Digital VIP */
+.membership-card-wrap {
+    perspective: 1000px;
+    margin-bottom: 35px;
+    display: flex;
+    justify-content: center;
+}
+
+.membership-card {
+    width: 100%;
+    max-width: 480px;
+    height: 250px;
+    border-radius: 24px;
+    padding: 26px 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: #ffffff;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.membership-card:hover {
+    transform: translateY(-4px) rotateX(2deg);
+}
+
+/* Shimmer overlay */
+.membership-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        60deg,
+        rgba(255, 255, 255, 0) 30%,
+        rgba(255, 255, 255, 0.25) 50%,
+        rgba(255, 255, 255, 0) 70%
+    );
+    transform: rotate(30deg);
+    animation: shimmer 6s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) rotate(30deg); }
+    100% { transform: translateX(100%) rotate(30deg); }
+}
+
+.membership-card.tier-bronce {
+    background: linear-gradient(135deg, #cd7f32 0%, #b86d26 50%, #8b4513 100%);
+}
+
+.membership-card.tier-plata {
+    background: linear-gradient(135deg, #93a5cf 0%, #8096b8 50%, #576574 100%);
+}
+
+.membership-card.tier-oro {
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 50%, #e67e22 100%);
+}
+
+.membership-card.tier-diamante {
+    background: linear-gradient(135deg, #ff70af 0%, #8c52ff 50%, #38ef7d 100%);
+}
+
+.membership-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 2;
+}
+
+.brand-vip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vip-text {
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.card-chip {
+    font-size: 1.5rem;
+    opacity: 0.85;
+}
+
+.membership-card-middle {
+    z-index: 2;
+}
+
+.member-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.85;
+}
+
+.member-tier-title {
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.membership-card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    z-index: 2;
+}
+
+.member-data {
+    display: flex;
+    flex-direction: column;
+}
+
+.data-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    opacity: 0.8;
+}
+
+.data-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.points-highlight .data-value {
+    font-size: 1.35rem;
+    color: #fffb8f;
+    font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Barra de progreso de nivel */
+.tier-progress-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 26px;
+    border: 1px solid var(--kawaii-border-soft);
+    box-shadow: 0 8px 25px rgba(233, 79, 163, 0.08);
+    margin-bottom: 35px;
+}
+
+.progress-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.progress-info-row h3 {
+    font-size: 1.15rem;
+    color: #2d2030;
+    font-weight: 700;
+}
+
+.progress-sub {
+    font-size: 0.9rem;
+    color: var(--kawaii-text-muted);
+}
+
+.current-tier-pill {
+    background: #fff0f7;
+    color: var(--kawaii-pink-primary);
+    border: 1.5px solid #f8b4d9;
+    padding: 6px 16px;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 0.9rem;
+}
+
+.progress-bar-track {
+    width: 100%;
+    height: 14px;
+    background: #f0e6f5;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 14px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff70af 0%, #8c52ff 100%);
+    border-radius: 20px;
+    transition: width 0.6s ease;
+}
+
+.tier-milestones {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: var(--kawaii-text-muted);
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.milestone.reached {
+    color: var(--kawaii-pink-primary);
+    font-weight: 700;
+}
+
+/* Beneficios */
+.benefits-section {
+    margin-bottom: 35px;
+}
+
+.benefits-section h2 {
+    font-size: 1.35rem;
+    color: #2d2030;
+    margin-bottom: 18px;
+    font-weight: 700;
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.benefit-card {
+    background: #ffffff;
+    border: 1px solid var(--kawaii-border-soft);
+    border-radius: 16px;
+    padding: 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    box-shadow: 0 4px 15px rgba(233, 79, 163, 0.05);
+}
+
+.benefit-icon {
+    font-size: 1.4rem;
+}
+
+.benefit-text {
+    font-size: 0.9rem;
+    color: #2d2030;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+/* Pasos para ganar puntos */
+.earn-points-banner {
+    background: linear-gradient(135deg, #fff0f7 0%, #f6f0ff 100%);
+    border: 1px solid #fae6f2;
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 35px;
+}
+
+.earn-points-banner h2 {
+    font-size: 1.35rem;
+    color: #6a0f6a;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.earn-steps-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 768px) {
+    .earn-steps-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.earn-step {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 16px;
+    padding: 18px;
+    text-align: center;
+    border: 1px solid #ffd1dc;
+}
+
+.step-num {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+.earn-step h4 {
+    font-size: 0.95rem;
+    color: #2d2030;
+    margin-bottom: 6px;
+}
+
+.earn-step p {
+    font-size: 0.8rem;
+    color: var(--kawaii-text-muted);
+    line-height: 1.4;
+}
+
+/* Tabla de historial */
+.history-section h2 {
+    font-size: 1.35rem;
+    color: #2d2030;
+    margin-bottom: 18px;
+    font-weight: 700;
+}
+
+.history-table-card {
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid var(--kawaii-border-soft);
+    overflow-x: auto;
+    box-shadow: 0 4px 20px rgba(233, 79, 163, 0.05);
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.history-table th {
+    background: #faf5fa;
+    padding: 14px 18px;
+    color: #6a0f6a;
+    font-weight: 700;
+    border-bottom: 1.5px solid var(--kawaii-border-soft);
+}
+
+.history-table td {
+    padding: 14px 18px;
+    border-bottom: 1px solid #fcf0f7;
+    color: #2d2030;
+}
+
+.trans-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.trans-ganados {
+    background: #e6f9f0;
+    color: #0e8549;
+}
+
+.trans-bonus {
+    background: #f6f0ff;
+    color: #8c52ff;
+}
+
+.trans-canjeados {
+    background: #fff0f7;
+    color: #e94fa3;
+}
+
+.pts-column {
+    font-weight: 800;
+}
+
+.pts-positive {
+    color: #0e8549;
+}
+
+.pts-negative {
+    color: #dc3545;
+}
+
+.empty-history-box {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    color: var(--kawaii-text-muted);
+    border: 1px dashed var(--kawaii-border-soft);
+}
+
+/* Botón Calificar en Mis Pedidos */
+.btn-review-order {
+    background: #fff8eb;
+    color: #b37400;
+    border: 1.5px solid #ffe1a6;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-review-order:hover {
+    background: #ffe1a6;
+    color: #7d5100;
+    transform: translateY(-1px);
+}

@@ -9,4 +9,18 @@ def get(dictionary, key):
     dentro de las plantillas de Django.
     Uso: {{ diccionario|get:clave }}
     """
-    return dictionary.get(key)
+    if isinstance(dictionary, dict):
+        return dictionary.get(key)
+    return None
+
+
+@register.filter
+def subtract(value, arg):
+    """
+    Resta dos valores numéricos dentro de plantillas de Django.
+    Uso: {{ valor1|subtract:valor2 }}
+    """
+    try:
+        return float(value) - float(arg)
+    except (ValueError, TypeError):
+        return 0

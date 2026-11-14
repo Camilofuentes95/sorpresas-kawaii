@@ -104,6 +104,7 @@ TEMPLATES = [
                 'django.template.context_processors.media',
                 'sorpresas_kawai.context_processors.carrito_context',
                 'sorpresas_kawai.context_processors.configuracion_tienda_context',
+                'sorpresas_kawai.context_processors.fidelizacion_y_deseos_context',
             ],
 
         },

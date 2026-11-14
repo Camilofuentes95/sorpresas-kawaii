@@ -8,6 +8,7 @@ Estructura de rutas de la aplicacion organizadas por modulos funcionales:
 4. Operaciones transaccionales del carrito de compras.
 5. Gestion y confirmacion de ordenes de pedido.
 6. Panel administrativo y metricas gerenciales de ventas.
+7. Resenas y Lista de Deseos.
 """
 
 from django.urls import path, reverse_lazy
@@ -67,6 +68,16 @@ urlpatterns = [
     path('productos/', views.lista_productos, name='lista_productos'),
     path('combos/', views.lista_combos, name='lista_combos'),
     path('sorpresa/', views.lista_sorpresas, name='lista_sorpresas'),
+
+    # ---------------------------------------------------------
+    # 7. Resenas y Lista de Deseos
+    # ---------------------------------------------------------
+    path('productos/<uuid:producto_id>/', views.detalle_producto, name='detalle_producto'),
+    path('combos/<uuid:combo_id>/', views.detalle_combo, name='detalle_combo'),
+    path('favoritos/', views.ver_lista_deseos, name='ver_lista_deseos'),
+    path('favoritos/toggle/<str:tipo>/<uuid:item_id>/', views.toggle_favorito, name='toggle_favorito'),
+    path('favoritos/quitar/<uuid:deseo_id>/', views.quitar_de_deseos, name='quitar_de_deseos'),
+    path('resenas/crear/<str:tipo>/<uuid:item_id>/', views.crear_resena, name='crear_resena'),
 
     # ---------------------------------------------------------
     # 4. Carrito de Compras (Productos y Combos)

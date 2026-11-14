@@ -15,14 +15,22 @@
         <!-- Navegación de Catálogo al centro -->
         <nav class="navbar-center" aria-label="Navegación principal">
             <a href="{% url 'inicio' %}" class="nav-item {% if request.resolver_match.url_name == 'inicio' %}active{% endif %}">Inicio</a>
-            <a href="{% url 'lista_productos' %}" class="nav-item {% if request.resolver_match.url_name == 'lista_productos' %}active{% endif %}">Productos</a>
-            <a href="{% url 'lista_combos' %}" class="nav-item {% if request.resolver_match.url_name == 'lista_combos' %}active{% endif %}">Combos</a>
+            <a href="{% url 'lista_productos' %}" class="nav-item {% if request.resolver_match.url_name == 'lista_productos' or request.resolver_match.url_name == 'detalle_producto' %}active{% endif %}">Productos</a>
+            <a href="{% url 'lista_combos' %}" class="nav-item {% if request.resolver_match.url_name == 'lista_combos' or request.resolver_match.url_name == 'detalle_combo' %}active{% endif %}">Combos</a>
             <a href="{% url 'lista_sorpresas' %}" class="nav-item {% if request.resolver_match.url_name == 'lista_sorpresas' %}active{% endif %}">Sorpresas</a>
         </nav>
 
         <!-- Acciones de Usuario a la derecha -->
         <div class="navbar-actions">
             {% if user.is_authenticated %}
+                <!-- Favoritos / Lista de Deseos -->
+                <a href="{% url 'ver_lista_deseos' %}" class="btn-nav-action btn-wishlist-nav" title="Mis Favoritos">
+                    <i class="fa-solid fa-heart" style="color: #e94fa3;"></i>
+                    <span>Favoritos</span>
+                    <span id="nav-wishlist-badge" class="cart-badge" style="background: #ff529a; {% if not deseos_total_items %}display: none;{% endif %}">{{ deseos_total_items }}</span>
+                </a>
+
+                <!-- Carrito -->
                 <a href="{% url 'ver_carrito' %}" class="btn-nav-action btn-cart" title="Ver Carrito">
                     <i class="fa-solid fa-cart-shopping"></i>
                     <span>Carrito</span>
@@ -31,10 +39,13 @@
                     {% endif %}
                 </a>
 
+                <!-- Mis Pedidos -->
                 <a href="{% url 'mis_pedidos' %}" class="btn-nav-action btn-orders" title="Mis Pedidos">
                     <i class="fa-solid fa-box-open"></i>
                     <span>Pedidos</span>
                 </a>
+
+                <!-- Logout -->
                 <a href="{% url 'logout' %}" class="btn-nav-logout" title="Cerrar sesión">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </a>

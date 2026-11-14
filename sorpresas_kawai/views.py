@@ -10,6 +10,7 @@ Gestiona el flujo transaccional y la presentacion de la tienda en linea:
 """
 
 import random
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.db import transaction, IntegrityError
@@ -27,7 +28,8 @@ from django.conf import settings
 from .models import (
     Categoria, Producto, Combo, Pedido,
     DetallePedido, CarritoDeCompras, ItemCarrito,
-    ConfiguracionTienda
+    ConfiguracionTienda,
+    ListaDeseos, Resena
 )
 from .metricas_views import (
     metricas_ventas_dashboard,
@@ -111,43 +113,58 @@ def login_view(request):
 def register_view(request):
     """
     Registra nuevos clientes en el sistema.
-    Aplica politicas de seguridad:
+    Aplica politicas de seguridad y privacidad:
+    - Captura formal de nombre y apellido para proteger el correo en resenas publicas.
     - Verificacion de correo electronico valido.
     - Concordancia entre contrasena y confirmacion.
     - Cumplimiento de longitud y complejidad mediante AUTH_PASSWORD_VALIDATORS.
     - Control de unicidad de cuentas para evitar duplicidad de correos.
     """
     if request.method == 'POST':
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
         email = request.POST.get('email', '').strip().lower()
         password1 = request.POST.get('password1', '')
         password2 = request.POST.get('password2', '')
 
-        if not email or not password1 or not password2:
-            messages.error(request, "Todos los campos son obligatorios.")
-            return render(request, 'admin/register.html')
+        contexto_error = {
+            'first_name': first_name,
+            'last_name': last_name,
+            'email': email
+        }
+
+        if not first_name or not last_name or not email or not password1 or not password2:
+            messages.error(request, "Todos los campos (nombre, apellido, correo y contraseña) son obligatorios.")
+            return render(request, 'admin/register.html', contexto_error)
 
         try:
             validate_email(email)
         except ValidationError:
-            messages.error(request, "Por favor ingresa un correo electronico valido.")
-            return render(request, 'admin/register.html')
+            messages.error(request, "Por favor ingresa un correo electrónico válido.")
+            return render(request, 'admin/register.html', contexto_error)
 
         if password1 != password2:
-            messages.error(request, "Las contrasenas no coinciden.")
-            return render(request, 'admin/register.html')
+            messages.error(request, "Las contraseñas no coinciden.")
+            return render(request, 'admin/register.html', contexto_error)
 
         try:
             validate_password(password1)
         except ValidationError as error:
             for msg in error.messages:
                 messages.error(request, msg)
-            return render(request, 'admin/register.html')
+            return render(request, 'admin/register.html', contexto_error)
 
         if User.objects.filter(username=email).exists() or User.objects.filter(email=email).exists():
-            messages.error(request, "Ya existe un usuario registrado con este correo electronico.")
-            return render(request, 'admin/register.html')
+            messages.error(request, "Ya existe un usuario registrado con este correo electrónico.")
+            return render(request, 'admin/register.html', contexto_error)
 
-        user = User.objects.create_user(username=email, email=email, password=password1)
+        user = User.objects.create_user(
+            username=email,
+            email=email,
+            password=password1,
+            first_name=first_name,
+            last_name=last_name
+        )
         user.save()
 
         return render(request, 'admin/register.html', {'messages_success': True})
@@ -696,3 +713,321 @@ def mis_pedidos(request):
     ).order_by('-fecha_pedido').prefetch_related('detalles__producto', 'detalles__combo')
 
     return render(request, 'pedido/mis_pedidos.html', {'pedidos': pedidos})
+
+
+# =============================================================================
+# VISTAS DE RESEÑAS Y LISTA DE DESEOS
+# =============================================================================
+
+def detalle_producto(request, producto_id):
+    """
+    Despliega la ficha tecnica y comercial detallada del producto o sorpresa.
+    Incluye:
+    - Galeria y datos del articulo (precio unitario, descuento vigente, stock).
+    - Estado de inclusion en carrito y lista de deseos.
+    - Calificacion promedio y distribucion de valoraciones en estrellas.
+    - Listado de opiniones aprobadas con soporte para fotografias y badge de compra verificada.
+    - Formulario para calificar si el usuario tiene una compra despachada o entregada.
+    """
+    producto = get_object_or_404(Producto.objects.select_related('id_categoria'), id=producto_id)
+    resenas = producto.resenas.filter(aprobado=True).select_related('usuario').order_by('-fecha_creacion')
+
+    usuario_compro = False
+    mi_resena = None
+    es_favorito = False
+    cantidad_en_carrito = 0
+
+    if request.user.is_authenticated:
+        # Se restringe la calificacion exclusivamente a ordenes despachadas o entregadas
+        pedidos_enviados = Pedido.objects.filter(
+            id_usuario=request.user,
+            estado__in=['ENVIADO', 'ENTREGADO']
+        )
+        usuario_compro = DetallePedido.objects.filter(
+            pedido__in=pedidos_enviados, producto=producto
+        ).exists() or pedidos_enviados.filter(id_producto_opcional=producto).exists()
+
+        mi_resena = Resena.objects.filter(usuario=request.user, producto=producto).first()
+        es_favorito = ListaDeseos.objects.filter(usuario=request.user, producto=producto).exists()
+
+        try:
+            item_c = ItemCarrito.objects.filter(carrito__usuario=request.user, producto=producto).first()
+            if item_c:
+                cantidad_en_carrito = item_c.cantidad
+        except Exception:
+            pass
+
+    relacionados = Producto.objects.filter(
+        id_categoria=producto.id_categoria,
+        activo=True
+    ).exclude(id=producto.id)[:4]
+
+    contexto = {
+        'producto': producto,
+        'resenas': resenas,
+        'total_resenas': resenas.count(),
+        'desglose_calificaciones': producto.get_desglose_calificaciones(),
+        'usuario_compro': usuario_compro,
+        'mi_resena': mi_resena,
+        'es_favorito': es_favorito,
+        'cantidad_en_carrito': cantidad_en_carrito,
+        'relacionados': relacionados,
+    }
+    return render(request, 'productos/detalle_producto.html', contexto)
+
+
+def detalle_combo(request, combo_id):
+    """
+    Despliega la ficha comercial del combo promocional.
+    Muestra los articulos integrantes, cantidades, descuento, resenas y valoraciones.
+    """
+    combo = get_object_or_404(Combo.objects.prefetch_related('combosproductos_set__producto'), id=combo_id)
+    resenas = combo.resenas.filter(aprobado=True).select_related('usuario').order_by('-fecha_creacion')
+
+    usuario_compro = False
+    mi_resena = None
+    es_favorito = False
+    cantidad_en_carrito = 0
+
+    if request.user.is_authenticated:
+        # Se restringe la calificacion exclusivamente a ordenes despachadas o entregadas
+        pedidos_enviados = Pedido.objects.filter(
+            id_usuario=request.user,
+            estado__in=['ENVIADO', 'ENTREGADO']
+        )
+        usuario_compro = DetallePedido.objects.filter(
+            pedido__in=pedidos_enviados, combo=combo
+        ).exists() or pedidos_enviados.filter(combo_opcional=combo).exists()
+
+        mi_resena = Resena.objects.filter(usuario=request.user, combo=combo).first()
+        es_favorito = ListaDeseos.objects.filter(usuario=request.user, combo=combo).exists()
+
+        try:
+            item_c = ItemCarrito.objects.filter(carrito__usuario=request.user, combo=combo).first()
+            if item_c:
+                cantidad_en_carrito = item_c.cantidad
+        except Exception:
+            pass
+
+    contexto = {
+        'combo': combo,
+        'items_combo': combo.combosproductos_set.select_related('producto'),
+        'resenas': resenas,
+        'total_resenas': resenas.count(),
+        'desglose_calificaciones': combo.get_desglose_calificaciones(),
+        'usuario_compro': usuario_compro,
+        'mi_resena': mi_resena,
+        'es_favorito': es_favorito,
+        'cantidad_en_carrito': cantidad_en_carrito,
+    }
+    return render(request, 'productos/detalle_combo.html', contexto)
+
+
+@login_required
+def toggle_favorito(request, tipo, item_id):
+    """
+    Agrega o retira un articulo (producto o combo) de la lista de deseos del usuario.
+    Soporta peticiones asincronas JSON (fetch/AJAX) para manipulacion reactiva
+    y formularios POST tradicionales con redireccion.
+    """
+    is_ajax = (
+        request.headers.get('x-requested-with') == 'XMLHttpRequest' or
+        request.GET.get('format') == 'json' or
+        'application/json' in request.headers.get('accept', '')
+    )
+
+    agregado = False
+    mensaje = ""
+
+    if tipo == 'producto':
+        prod = get_object_or_404(Producto, id=item_id)
+        deseo = ListaDeseos.objects.filter(usuario=request.user, producto=prod).first()
+        if deseo:
+            deseo.delete()
+            agregado = False
+            mensaje = f"'{prod.nombre}' se retiro de tus favoritos."
+        else:
+            ListaDeseos.objects.create(usuario=request.user, producto=prod)
+            agregado = True
+            mensaje = f"'{prod.nombre}' se agrego a tus favoritos ❤️"
+    elif tipo == 'combo':
+        cmb = get_object_or_404(Combo, id=item_id)
+        deseo = ListaDeseos.objects.filter(usuario=request.user, combo=cmb).first()
+        if deseo:
+            deseo.delete()
+            agregado = False
+            mensaje = f"'{cmb.nombre}' se retiro de tus favoritos."
+        else:
+            ListaDeseos.objects.create(usuario=request.user, combo=cmb)
+            agregado = True
+            mensaje = f"'{cmb.nombre}' se agrego a tus favoritos ❤️"
+    else:
+        if is_ajax:
+            return JsonResponse({'status': 'error', 'message': 'Tipo no reconocido.'}, status=400)
+        return redirect('inicio')
+
+    total_deseos = ListaDeseos.objects.filter(usuario=request.user).count()
+
+    if is_ajax:
+        return JsonResponse({
+            'status': 'ok',
+            'agregado': agregado,
+            'mensaje': mensaje,
+            'total_deseos': total_deseos
+        })
+
+    messages.success(request, mensaje)
+    referer = request.META.get('HTTP_REFERER')
+    return redirect(referer if referer else 'ver_lista_deseos')
+
+
+@login_required
+def ver_lista_deseos(request):
+    """
+    Despliega la vitrina de articulos favoritos guardados por el cliente autenticado.
+    Permite visualizar precios actuales, descuentos y transferir articulos al carrito.
+    """
+    deseos = ListaDeseos.objects.filter(
+        usuario=request.user
+    ).select_related('producto', 'combo').order_by('-fecha_agregado')
+
+    return render(request, 'fidelizacion/mis_deseos.html', {'deseos': deseos})
+
+
+@login_required
+def quitar_de_deseos(request, deseo_id):
+    """
+    Elimina un item especifico de la lista de deseos del usuario.
+    """
+    deseo = get_object_or_404(ListaDeseos, id=deseo_id, usuario=request.user)
+    nombre = deseo.producto.nombre if deseo.producto else (deseo.combo.nombre if deseo.combo else 'Articulo')
+    deseo.delete()
+    messages.info(request, f"Se retiro '{nombre}' de tu lista de deseos.")
+    return redirect('ver_lista_deseos')
+
+
+@login_required
+def crear_resena(request, tipo, item_id):
+    """
+    Registra o actualiza la valoracion y comentario de un usuario sobre un producto o combo.
+    Acepta calificacion en estrellas (1 a 5), texto y fotografia opcional.
+    Verifica que el usuario posea una orden en estado ENVIADO o ENTREGADO.
+    """
+    if request.method != 'POST':
+        return redirect('inicio')
+
+    try:
+        calificacion = int(request.POST.get('calificacion', 5))
+    except (ValueError, TypeError):
+        calificacion = 5
+
+    calificacion = max(1, min(5, calificacion))
+    titulo = request.POST.get('titulo', '').strip()
+    comentario = request.POST.get('comentario', '').strip()
+    foto = request.FILES.get('foto')
+
+    if not comentario:
+        messages.error(request, 'Por favor escribe un comentario para tu reseña.')
+        return redirect(request.META.get('HTTP_REFERER', 'inicio'))
+
+    if tipo == 'producto':
+        prod = get_object_or_404(Producto, id=item_id)
+
+        # Verificacion de seguridad: solo permitir calificar a clientes cuyos pedidos esten ENVIADOS o ENTREGADOS
+        pedidos_enviados = Pedido.objects.filter(
+            id_usuario=request.user,
+            estado__in=['ENVIADO', 'ENTREGADO']
+        )
+        ha_comprado = DetallePedido.objects.filter(
+            pedido__in=pedidos_enviados, producto=prod
+        ).exists() or pedidos_enviados.filter(id_producto_opcional=prod).exists()
+
+        if not ha_comprado and not request.user.is_staff:
+            pedidos_prep = Pedido.objects.filter(
+                id_usuario=request.user,
+                estado='PAGADO'
+            )
+            en_prep = DetallePedido.objects.filter(
+                pedido__in=pedidos_prep, producto=prod
+            ).exists() or pedidos_prep.filter(id_producto_opcional=prod).exists()
+
+            if en_prep:
+                messages.info(request, 'Tu pedido aún se encuentra en preparación. Podrás calificar este producto una vez que tu orden haya sido enviada 🚚✨')
+            else:
+                messages.error(request, 'Solo los clientes con una orden enviada o entregada de este producto pueden calificarlo.')
+            return redirect('detalle_producto', producto_id=prod.id)
+
+        resena, created = Resena.objects.get_or_create(
+            usuario=request.user,
+            producto=prod,
+            defaults={
+                'calificacion': calificacion,
+                'titulo': titulo,
+                'comentario': comentario,
+                'foto': foto,
+                'aprobado': True,
+            }
+        )
+        if not created:
+            resena.calificacion = calificacion
+            resena.titulo = titulo
+            resena.comentario = comentario
+            if foto:
+                resena.foto = foto
+            resena.save()
+            messages.success(request, '¡Tu reseña fue actualizada correctamente! ✨')
+        else:
+            messages.success(request, '¡Muchas gracias por tu opinión! Tu reseña fue publicada con éxito ✨')
+        return redirect('detalle_producto', producto_id=prod.id)
+
+    elif tipo == 'combo':
+        cmb = get_object_or_404(Combo, id=item_id)
+
+        # Verificacion de seguridad: solo permitir calificar a clientes cuyos pedidos esten ENVIADOS o ENTREGADOS
+        pedidos_enviados = Pedido.objects.filter(
+            id_usuario=request.user,
+            estado__in=['ENVIADO', 'ENTREGADO']
+        )
+        ha_comprado = DetallePedido.objects.filter(
+            pedido__in=pedidos_enviados, combo=cmb
+        ).exists() or pedidos_enviados.filter(combo_opcional=cmb).exists()
+
+        if not ha_comprado and not request.user.is_staff:
+            pedidos_prep = Pedido.objects.filter(
+                id_usuario=request.user,
+                estado='PAGADO'
+            )
+            en_prep = DetallePedido.objects.filter(
+                pedido__in=pedidos_prep, combo=cmb
+            ).exists() or pedidos_prep.filter(combo_opcional=cmb).exists()
+
+            if en_prep:
+                messages.info(request, 'Tu pedido aún se encuentra en preparación. Podrás calificar este combo una vez que tu orden haya sido enviada 🚚✨')
+            else:
+                messages.error(request, 'Solo los clientes con una orden enviada o entregada de este combo pueden calificarlo.')
+            return redirect('detalle_combo', combo_id=cmb.id)
+
+        resena, created = Resena.objects.get_or_create(
+            usuario=request.user,
+            combo=cmb,
+            defaults={
+                'calificacion': calificacion,
+                'titulo': titulo,
+                'comentario': comentario,
+                'foto': foto,
+                'aprobado': True,
+            }
+        )
+        if not created:
+            resena.calificacion = calificacion
+            resena.titulo = titulo
+            resena.comentario = comentario
+            if foto:
+                resena.foto = foto
+            resena.save()
+            messages.success(request, '¡Tu reseña de combo fue actualizada! ✨')
+        else:
+            messages.success(request, '¡Muchas gracias por tu opinión! Tu reseña del combo fue publicada con éxito ✨')
+        return redirect('detalle_combo', combo_id=cmb.id)
+
+    return redirect('inicio')

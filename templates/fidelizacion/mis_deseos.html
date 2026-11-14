@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static %}
+{% load carrito_filters %}
+
+{% block title %}Mis Favoritos · Lista de Deseos{% endblock %}
+
+{% block content %}
+<div class="catalog-container wishlist-container">
+    <div class="wishlist-header">
+        <div class="wishlist-badge-pill">
+            <span>❤️ MI LISTA DE DESEOS</span>
+        </div>
+        <h1>Tus Artículos Favoritos</h1>
+        <p>Guarda aquí los productos y combos kawaii que más te encantan para que no se te escapen. ¡Agrega al carrito cuando estés lista!</p>
+    </div>
+
+    {% if deseos %}
+    <div class="wishlist-count-bar">
+        <span><i class="fa-solid fa-heart" style="color: #e94fa3;"></i> Tienes <strong>{{ deseos|length }}</strong> artículo(s) guardado(s)</span>
+        <a href="{% url 'lista_productos' %}" class="btn-continue-shopping">
+            <i class="fa-solid fa-store"></i> Seguir explorando catálogo
+        </a>
+    </div>
+
+    <div class="product-grid">
+        {% for deseo in deseos %}
+        {% with item=deseo.item tipo=deseo.tipo %}
+        <div class="product-card wishlist-card">
+            <!-- Botón para remover de favoritos -->
+            <form method="post" action="{% url 'quitar_de_deseos' deseo.id %}" class="btn-remove-wishlist-form">
+                {% csrf_token %}
+                <button type="submit" class="btn-remove-wishlist" title="Eliminar de favoritos">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </form>
+
+            <div class="product-card-body">
+                <div class="product-image">
+                    {% if item.get_imagen_url %}
+                        <img src="{{ item.get_imagen_url }}" alt="{{ item.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                    {% else %}
+                        <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+                    {% endif %}
+
+                    {% if item.es_nuevo %}
+                        <span class="badge-nuevo"><i class="fa-solid fa-sparkles"></i> Nuevo</span>
+                    {% endif %}
+
+                    {% if item.descuento_porcentaje > 0 %}
+                        <span class="discount-badge">{{ item.descuento_porcentaje|floatformat:0 }}% OFF</span>
+                    {% endif %}
+                </div>
+
+                <!-- Nombre enlazado al detalle -->
+                {% if tipo == 'producto' %}
+                    <a href="{% url 'detalle_producto' item.id %}" class="product-link">
+                        <p class="product-name">{{ item.nombre }}</p>
+                    </a>
+                {% else %}
+                    <a href="{% url 'detalle_combo' item.id %}" class="product-link">
+                        <p class="product-name">{{ item.nombre }}</p>
+                    </a>
+                {% endif %}
+
+                <!-- Estrellas y rating -->
+                <div class="product-stars-row">
+                    <div class="stars-gold">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= item.estrellas_enteras %}
+                                <i class="fa-solid fa-star"></i>
+                            {% elif forloop.counter == item.estrellas_enteras|add:1 and item.tiene_media_estrella %}
+                                <i class="fa-solid fa-star-half-stroke"></i>
+                            {% else %}
+                                <i class="fa-regular fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="review-count">({{ item.total_resenas }})</span>
+                </div>
+
+                <div class="price-container">
+                    {% if tipo == 'producto' %}
+                        {% if item.descuento_porcentaje > 0 %}
+                            <span class="original-price">${{ item.valor_unitario|floatformat:0 }}</span>
+                            <span class="product-price">${{ item.precio_final|floatformat:0 }}</span>
+                        {% else %}
+                            <span class="product-price">${{ item.valor_unitario|floatformat:0 }}</span>
+                        {% endif %}
+                    {% else %}
+                        {% if item.descuento_porcentaje > 0 %}
+                            <span class="original-price">${{ item.valor_combo|floatformat:0 }}</span>
+                            <span class="product-price">${{ item.precio_final|floatformat:0 }}</span>
+                        {% else %}
+                            <span class="product-price">${{ item.valor_combo|floatformat:0 }}</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <!-- Botón de acción al carrito -->
+                <div class="wishlist-action-wrap">
+                    {% if tipo == 'producto' %}
+                        <form method="post" action="{% url 'agregar_a_carrito' item.id %}" style="width: 100%;">
+                            {% csrf_token %}
+                            <button type="submit" class="add-to-cart-button">
+                                <i class="fa-solid fa-cart-shopping"></i> Agregar al Carrito
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{% url 'agregar_combo_a_carrito' item.id %}" style="width: 100%;">
+                            {% csrf_token %}
+                            <button type="submit" class="add-to-cart-button">
+                                <i class="fa-solid fa-cart-shopping"></i> Agregar Combo al Carrito
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-catalog empty-wishlist-box">
+        <div class="empty-icon-pulse">💖✨</div>
+        <h2>Tu lista de deseos está vacía</h2>
+        <p>Aún no has guardado ningún artículo como favorito. Explora nuestro catálogo y presiona el corazón en los productos que más te gusten.</p>
+        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+            <a href="{% url 'lista_productos' %}" class="btn-productos" style="background: linear-gradient(135deg, #e94fa3 0%, #8c52ff 100%); color: white; padding: 12px 28px; border-radius: 50px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-store"></i> Ver Productos
+            </a>
+            <a href="{% url 'lista_sorpresas' %}" style="background: #fff0f7; color: #e94fa3; border: 2px solid #f8b4d9; padding: 12px 24px; border-radius: 50px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-gift"></i> Ver Sorpresas
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}
+

@@ -20,7 +20,12 @@
 
     <form class="login-form" method="POST">
         {% csrf_token %}
-        <input type="email" name="email" placeholder="Correo Electrónico" required>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%;">
+            <input type="text" name="first_name" placeholder="Nombre" required value="{{ first_name|default:'' }}" autocomplete="given-name">
+            <input type="text" name="last_name" placeholder="Apellido" required value="{{ last_name|default:'' }}" autocomplete="family-name">
+        </div>
+
+        <input type="email" name="email" placeholder="Correo Electrónico" required value="{{ email|default:'' }}" autocomplete="email">
 
         <div class="password-container">
             <input type="password" name="password1" id="password1" placeholder="Contraseña" required>

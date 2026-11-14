@@ -32,24 +32,56 @@
 
     <div class="scoop-grid">
         {% for sorpresa in sorpresas %}
-        <article class="scoop-card">
-            <div class="scoop-image-wrap">
-                {% if sorpresa.get_imagen_url %}
-                    <img class="scoop-image" src="{{ sorpresa.get_imagen_url }}" alt="{{ sorpresa.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
-                {% else %}
-                    <img class="scoop-image" src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
-                {% endif %}
+        <article class="scoop-card" style="position: relative;">
+            <!-- Botón de Favorito Flotante -->
+            {% if user.is_authenticated %}
+                <button type="button" class="btn-card-wishlist {% if sorpresa.id|stringformat:'s' in deseos_producto_ids %}active{% endif %}" onclick="toggleCardWishlist('producto', '{{ sorpresa.id }}', this)" title="Guardar en favoritos">
+                    <i class="fa-{% if sorpresa.id|stringformat:'s' in deseos_producto_ids %}solid{% else %}regular{% endif %} fa-heart"></i>
+                </button>
+            {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="btn-card-wishlist" title="Inicia sesión para guardar">
+                    <i class="fa-regular fa-heart"></i>
+                </a>
+            {% endif %}
 
-                {% if sorpresa.es_nuevo %}
-                    <span class="badge-nuevo" style="position: absolute; top: 12px; left: 12px; z-index: 2;">✨ Nuevo</span>
-                {% endif %}
+            <a href="{% url 'detalle_producto' sorpresa.id %}" class="product-img-link">
+                <div class="scoop-image-wrap">
+                    {% if sorpresa.get_imagen_url %}
+                        <img class="scoop-image" src="{{ sorpresa.get_imagen_url }}" alt="{{ sorpresa.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                    {% else %}
+                        <img class="scoop-image" src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+                    {% endif %}
 
-                {% if sorpresa.descuento_porcentaje > 0 %}
-                    <span class="discount-badge-scoop">{{ sorpresa.descuento_porcentaje|floatformat:0 }}% OFF</span>
-                {% endif %}
+                    {% if sorpresa.es_nuevo %}
+                        <span class="badge-nuevo" style="position: absolute; top: 12px; left: 12px; z-index: 2;">✨ Nuevo</span>
+                    {% endif %}
+
+                    {% if sorpresa.descuento_porcentaje > 0 %}
+                        <span class="discount-badge-scoop">{{ sorpresa.descuento_porcentaje|floatformat:0 }}% OFF</span>
+                    {% endif %}
+                </div>
+            </a>
+
+            <a href="{% url 'detalle_producto' sorpresa.id %}" class="product-link">
+                <h2>{{ sorpresa.nombre }}</h2>
+            </a>
+
+            <!-- Estrellas y rating -->
+            <div class="product-stars-row" style="margin-bottom: 8px;">
+                <div class="stars-gold">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= sorpresa.estrellas_enteras %}
+                            <i class="fa-solid fa-star"></i>
+                        {% elif forloop.counter == sorpresa.estrellas_enteras|add:1 and sorpresa.tiene_media_estrella %}
+                            <i class="fa-solid fa-star-half-stroke"></i>
+                        {% else %}
+                            <i class="fa-regular fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <span class="review-count">({{ sorpresa.total_resenas }})</span>
             </div>
 
-            <h2>{{ sorpresa.nombre }}</h2>
             <p>{{ sorpresa.descripcion|default:"Experiencia llena de figuras, accesorios y detalles kawaii mágicos al azar." }}</p>
             
             <div class="scoop-price-container">
@@ -105,4 +137,37 @@
     </div>
     {% endif %}
 </section>
+
+<script>
+function toggleCardWishlist(tipo, itemId, btnElement) {
+    const url = `/favoritos/toggle/${tipo}/${itemId}/?format=json`;
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            const icon = btnElement.querySelector('i');
+            if (data.agregado) {
+                btnElement.classList.add('active');
+                if (icon) { icon.classList.remove('fa-regular'); icon.classList.add('fa-solid'); }
+            } else {
+                btnElement.classList.remove('active');
+                if (icon) { icon.classList.remove('fa-solid'); icon.classList.add('fa-regular'); }
+            }
+            const navBadge = document.getElementById('nav-wishlist-badge');
+            if (navBadge) {
+                navBadge.innerText = data.total_deseos;
+                navBadge.style.display = data.total_deseos > 0 ? 'inline-flex' : 'none';
+            }
+        }
+    })
+    .catch(err => console.error(err));
+}
+</script>
 {% endblock content %}

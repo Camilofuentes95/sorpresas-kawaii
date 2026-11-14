@@ -7,6 +7,7 @@ Define la estructura relacional de la base de datos, incluyendo:
 - Gestion de ordenes de compra, estados y logistica (Pedido, DetallePedido).
 - Configuracion global de la tienda mediante patron Singleton (ConfiguracionTienda).
 - Modelo Proxy para experiencias dinamicas (Sorpresa).
+- Modulo de Resenas con Fotos y Lista de Deseos (ListaDeseos, Resena).
 """
 
 import uuid
@@ -15,6 +16,7 @@ import urllib.parse
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -167,6 +169,49 @@ class Producto(models.Model):
             return round(self.valor_unitario * (1 - (self.descuento_porcentaje / 100)), 2)
         return self.valor_unitario
 
+    @property
+    def promedio_calificacion(self):
+        """
+        Calcula la calificacion promedio de las resenas aprobadas del producto.
+        Retorna 5.0 por defecto si aun no existen resenas registradas.
+        """
+        resenas = self.resenas.filter(aprobado=True)
+        prom = resenas.aggregate(models.Avg('calificacion'))['calificacion__avg']
+        return round(prom, 1) if prom else 5.0
+
+    @property
+    def total_resenas(self):
+        """
+        Retorna el numero total de resenas publicas y aprobadas para este producto.
+        """
+        return self.resenas.filter(aprobado=True).count()
+
+    @property
+    def estrellas_enteras(self):
+        return int(self.promedio_calificacion)
+
+    @property
+    def tiene_media_estrella(self):
+        return (self.promedio_calificacion - self.estrellas_enteras) >= 0.5
+
+    @property
+    def estrellas_vacias(self):
+        media = 1 if self.tiene_media_estrella else 0
+        return max(0, 5 - self.estrellas_enteras - media)
+
+    def get_desglose_calificaciones(self):
+        """
+        Genera el desglose estadistico de calificaciones (1 a 5 estrellas) con porcentajes
+        para renderizar la ficha tecnica en la vista de detalle.
+        """
+        total = self.total_resenas
+        desglose = []
+        for star in range(5, 0, -1):
+            count = self.resenas.filter(aprobado=True, calificacion=star).count()
+            pct = round((count / total) * 100) if total > 0 else 0
+            desglose.append({'estrellas': star, 'conteo': count, 'porcentaje': pct})
+        return desglose
+
 
 class Combo(models.Model):
     """
@@ -270,6 +315,48 @@ class Combo(models.Model):
         if self.descuento_porcentaje and self.descuento_porcentaje > 0:
             return round(self.valor_combo * (1 - (self.descuento_porcentaje / 100)), 2)
         return self.valor_combo
+
+    @property
+    def promedio_calificacion(self):
+        """
+        Calcula la calificacion promedio de las resenas aprobadas del paquete combo.
+        Retorna 5.0 por defecto si no existen resenas registradas.
+        """
+        resenas = self.resenas.filter(aprobado=True)
+        prom = resenas.aggregate(models.Avg('calificacion'))['calificacion__avg']
+        return round(prom, 1) if prom else 5.0
+
+    @property
+    def total_resenas(self):
+        """
+        Retorna el numero total de resenas asociadas al paquete.
+        """
+        return self.resenas.filter(aprobado=True).count()
+
+    @property
+    def estrellas_enteras(self):
+        return int(self.promedio_calificacion)
+
+    @property
+    def tiene_media_estrella(self):
+        return (self.promedio_calificacion - self.estrellas_enteras) >= 0.5
+
+    @property
+    def estrellas_vacias(self):
+        media = 1 if self.tiene_media_estrella else 0
+        return max(0, 5 - self.estrellas_enteras - media)
+
+    def get_desglose_calificaciones(self):
+        """
+        Genera el desglose estadistico de calificaciones para combos.
+        """
+        total = self.total_resenas
+        desglose = []
+        for star in range(5, 0, -1):
+            count = self.resenas.filter(aprobado=True, calificacion=star).count()
+            pct = round((count / total) * 100) if total > 0 else 0
+            desglose.append({'estrellas': star, 'conteo': count, 'porcentaje': pct})
+        return desglose
 
 
 class CombosProductos(models.Model):
@@ -393,6 +480,17 @@ class Pedido(models.Model):
         blank=True,
         related_name='pedidos_producto'
     )
+    fecha_entrega = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Fecha de Entrega",
+        help_text="Fecha y hora en la que la orden paso formalmente al estado ENTREGADO."
+    )
+    correo_invitacion_calificar_enviado = models.BooleanField(
+        default=False,
+        verbose_name="Invitación de calificación enviada",
+        help_text="Indica si ya se despacho el correo automatico invitando a calificar tras 3 dias de la entrega."
+    )
 
     class Meta:
         verbose_name = "Pedido"
@@ -456,27 +554,43 @@ class Pedido(models.Model):
         mensaje = self.generar_mensaje_whatsapp()
         return f"https://wa.me/{phone_clean}?text={urllib.parse.quote(mensaje)}"
 
+    @property
+    def puede_ser_calificado(self):
+        """
+        Determina si la orden se encuentra en una etapa logistica donde el cliente
+        ya tiene o esta a punto de recibir los productos (ENVIADO o ENTREGADO).
+        """
+        return self.estado in ('ENVIADO', 'ENTREGADO')
+
     def save(self, *args, **kwargs):
         """
-        Metodo save interceptado para detectar transiciones de estado o actualizaciones
-        en la guia de transporte y emitir notificaciones por correo electronico de forma automatica.
+        Metodo save interceptado para registrar la fecha de entrega, detectar transiciones
+        de estado o actualizaciones en la guia de transporte y emitir notificaciones por correo.
         """
-        is_new = self.pk is None
         old_estado = None
         old_empresa = None
         old_guia = None
 
-        if not is_new:
+        if self.pk:
             prev = Pedido.objects.filter(pk=self.pk).values('estado', 'empresa_envio', 'numero_guia').first()
             if prev:
                 old_estado = prev.get('estado')
                 old_empresa = prev.get('empresa_envio')
                 old_guia = prev.get('numero_guia')
 
+        # Control automatico de fecha de entrega
+        if self.estado == 'ENTREGADO':
+            if not self.fecha_entrega:
+                self.fecha_entrega = timezone.now()
+        elif old_estado == 'ENTREGADO' and self.estado != 'ENTREGADO':
+            # Si el pedido regresa a un estado anterior, revertir la marca de entrega y recordatorio
+            self.fecha_entrega = None
+            self.correo_invitacion_calificar_enviado = False
+
         super().save(*args, **kwargs)
 
         # Disparar notificacion si hubo cambio relevante en un pedido existente
-        if not is_new and old_estado is not None:
+        if old_estado is not None:
             estado_cambio = old_estado != self.estado
             guia_cambio = (self.estado in ('ENVIADO', 'ENTREGADO')) and (
                 (bool(self.numero_guia) and self.numero_guia != old_guia) or
@@ -730,3 +844,200 @@ class Sorpresa(Producto):
         proxy = True
         verbose_name = "Sorpresa y Experiencia"
         verbose_name_plural = "Sorpresas y Experiencias"
+
+
+# =============================================================================
+# MODULO: RESENAS CON FOTOS Y LISTA DE DESEOS
+# =============================================================================
+
+class ListaDeseos(models.Model):
+    """
+    Lista de articulos favoritos o deseados guardados por el cliente para compras futuras.
+    Permite marcar productos individuales o combos con acceso directo desde el perfil.
+    """
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='deseos',
+        help_text="Cliente propietario del articulo favorito."
+    )
+    producto = models.ForeignKey(
+        Producto,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='deseado_por',
+        help_text="Producto individual marcado como favorito."
+    )
+    combo = models.ForeignKey(
+        Combo,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='deseado_por',
+        help_text="Combo especial marcado como favorito."
+    )
+    fecha_agregado = models.DateTimeField(
+        auto_now_add=True,
+        help_text="Fecha y hora en la que se guardo en la lista de deseos."
+    )
+
+    class Meta:
+        verbose_name = "Articulo en Lista de Deseos"
+        verbose_name_plural = "Lista de Deseos / Favoritos"
+        ordering = ['-fecha_agregado']
+
+    def __str__(self):
+        nombre = self.producto.nombre if self.producto else (self.combo.nombre if self.combo else "Articulo")
+        return f"{self.usuario.username} ❤️ {nombre}"
+
+    @property
+    def item(self):
+        return self.producto or self.combo
+
+    @property
+    def tipo(self):
+        return 'producto' if self.producto else 'combo'
+
+
+class Resena(models.Model):
+    """
+    Calificacion y resena suministrada por un cliente sobre un producto o combo.
+    Incluye puntuacion de 1 a 5 estrellas, comentario detallado, soporte para
+    fotografia real del producto y verificacion automatica de compra.
+    """
+    CALIFICACIONES = [
+        (1, '1 Estrella - Muy insatisfecho 😢'),
+        (2, '2 Estrellas - Regular 😕'),
+        (3, '3 Estrellas - Bueno 🙂'),
+        (4, '4 Estrellas - Muy bueno 😊'),
+        (5, '5 Estrellas - ¡Excelente y Magico! 💖✨'),
+    ]
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='resenas',
+        help_text="Usuario que publica la valoracion."
+    )
+    producto = models.ForeignKey(
+        Producto,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='resenas',
+        help_text="Producto evaluado."
+    )
+    combo = models.ForeignKey(
+        Combo,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='resenas',
+        help_text="Combo evaluado."
+    )
+    calificacion = models.PositiveSmallIntegerField(
+        choices=CALIFICACIONES,
+        default=5,
+        help_text="Calificacion asignada de 1 a 5 estrellas."
+    )
+    titulo = models.CharField(
+        max_length=150,
+        blank=True,
+        default='',
+        help_text="Titulo breve o sintesis de la opinion."
+    )
+    comentario = models.TextField(
+        help_text="Opinion detallada del cliente sobre su experiencia y el producto recibido."
+    )
+    foto = models.ImageField(
+        upload_to='resenas/',
+        blank=True,
+        null=True,
+        help_text="Fotografia real del producto tomada por el cliente."
+    )
+    compra_verificada = models.BooleanField(
+        default=False,
+        help_text="Indica si el sistema valido que el usuario adquirio previamente este articulo."
+    )
+    aprobado = models.BooleanField(
+        default=True,
+        help_text="Estado de moderacion para asegurar comentarios respetuosos."
+    )
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True,
+        help_text="Fecha y hora de registro de la resena."
+    )
+    fecha_actualizacion = models.DateTimeField(
+        auto_now=True,
+        help_text="Fecha de ultima edicion de la resena."
+    )
+
+    class Meta:
+        verbose_name = "Resena y Calificacion"
+        verbose_name_plural = "Resenas y Calificaciones"
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        item_nombre = self.producto.nombre if self.producto else (self.combo.nombre if self.combo else "Articulo")
+        return f"{self.calificacion}★ por {self.nombre_publico_usuario} en {item_nombre}"
+
+    @property
+    def nombre_publico_usuario(self):
+        """
+        Retorna el nombre publico del cliente para comentarios protegiendo su privacidad
+        y evitando mostrar direcciones de correo electronico en la tienda virtual.
+        Ejemplo: 'Laura M.' o 'Carlos Perez'.
+        """
+        if not self.usuario:
+            return "Cliente Kawaii"
+
+        nombre = (self.usuario.first_name or '').strip()
+        apellido = (self.usuario.last_name or '').strip()
+
+        if nombre and apellido:
+            return f"{nombre} {apellido[0].upper()}."
+        elif nombre:
+            return nombre
+
+        raw = (self.usuario.username or '').strip()
+        if '@' in raw:
+            # Si el username historico es un correo, ocultar la direccion por seguridad
+            prefijo = raw.split('@')[0]
+            if len(prefijo) > 2:
+                return f"{prefijo[:2].capitalize()}***"
+            return "Cliente Verificado"
+        elif raw:
+            return raw
+
+        return "Cliente Kawaii"
+
+    def save(self, *args, **kwargs):
+        # Verificacion automatica de compra previa confirmada (exclusivamente pedidos ENVIADOS o ENTREGADOS)
+        if self.usuario and (self.producto or self.combo):
+            pedidos_usuario = Pedido.objects.filter(
+                id_usuario=self.usuario,
+                estado__in=['ENVIADO', 'ENTREGADO']
+            )
+            if self.producto:
+                compro = DetallePedido.objects.filter(pedido__in=pedidos_usuario, producto=self.producto).exists()
+                if not compro:
+                    compro = pedidos_usuario.filter(id_producto_opcional=self.producto).exists()
+                self.compra_verificada = compro
+            elif self.combo:
+                compro = DetallePedido.objects.filter(pedido__in=pedidos_usuario, combo=self.combo).exists()
+                if not compro:
+                    compro = pedidos_usuario.filter(combo_opcional=self.combo).exists()
+                self.compra_verificada = compro
+
+        super().save(*args, **kwargs)

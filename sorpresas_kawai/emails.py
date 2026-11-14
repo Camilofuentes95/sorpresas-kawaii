@@ -715,3 +715,203 @@ Por favor ingresa al panel de administración para gestionar la reposición de e
     except Exception:
         return False
 
+
+def enviar_correo_invitacion_calificar(pedido):
+    """
+    Despacha un correo electronico personalizado al cliente invitandolo a calificar
+    y dejar su opinion y fotografias reales sobre los articulos que recibio en su orden.
+    Se dispara 3 dias despues de que el pedido fue marcado formalmente como ENTREGADO.
+    """
+    if not pedido.id_usuario or not pedido.id_usuario.email:
+        return False
+
+    cliente = pedido.id_usuario.first_name or pedido.id_usuario.username
+    site_url = getattr(settings, 'SITE_URL', 'http://127.0.0.1:8000').rstrip('/')
+
+    # Recopilar items calificables del pedido
+    items_calificables = []
+    for d in pedido.detalles.all():
+        if d.producto:
+            url_item = f"{site_url}/productos/{d.producto.id}/#escribir-resena"
+            items_calificables.append({
+                'nombre': d.producto.nombre,
+                'tipo': 'Producto',
+                'url': url_item,
+                'cantidad': d.cantidad
+            })
+        elif d.combo:
+            url_item = f"{site_url}/combos/{d.combo.id}/#escribir-resena"
+            items_calificables.append({
+                'nombre': d.combo.nombre,
+                'tipo': 'Combo',
+                'url': url_item,
+                'cantidad': d.cantidad
+            })
+
+    if not items_calificables:
+        if pedido.combo_opcional:
+            url_item = f"{site_url}/combos/{pedido.combo_opcional.id}/#escribir-resena"
+            items_calificables.append({
+                'nombre': pedido.combo_opcional.nombre,
+                'tipo': 'Combo',
+                'url': url_item,
+                'cantidad': 1
+            })
+        elif pedido.id_producto_opcional:
+            url_item = f"{site_url}/productos/{pedido.id_producto_opcional.id}/#escribir-resena"
+            items_calificables.append({
+                'nombre': pedido.id_producto_opcional.nombre,
+                'tipo': 'Producto',
+                'url': url_item,
+                'cantidad': 1
+            })
+
+    # Si no hay items identificables, enlace general a Mis Pedidos
+    url_mis_pedidos = f"{site_url}/mis-pedidos/"
+
+    # Construir listado HTML de botones de calificacion
+    items_cards_html = []
+    for it in items_calificables:
+        items_cards_html.append(f"""
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #faf5fc; border: 1.5px solid #fae6f2; border-radius: 12px; margin-bottom: 12px;">
+            <tr>
+                <td style="padding: 14px 18px; vertical-align: middle;">
+                    <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #8c52ff; font-weight: 700;">{it['tipo']}</span>
+                    <h4 style="margin: 3px 0 2px 0; color: #2d2030; font-size: 15px; font-weight: 700;">{it['nombre']}</h4>
+                    <span style="font-size: 12px; color: #7f7084;">Cantidad: {it['cantidad']}</span>
+                </td>
+                <td align="right" style="padding: 14px 18px; vertical-align: middle; white-space: nowrap;">
+                    <a href="{it['url']}" style="background: linear-gradient(135deg, #ff70af 0%, #e94fa3 100%); color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 700; padding: 9px 18px; border-radius: 50px; display: inline-block;">
+                        ⭐ Calificar
+                    </a>
+                </td>
+            </tr>
+        </table>
+        """)
+
+    bloque_items_html = "".join(items_cards_html) if items_cards_html else f"""
+    <div style="text-align: center; margin: 20px 0;">
+        <a href="{url_mis_pedidos}" style="background: linear-gradient(135deg, #ff70af 0%, #e94fa3 100%); color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 700; padding: 12px 24px; border-radius: 50px; display: inline-block;">
+            ⭐ Ver mis compras y calificar
+        </a>
+    </div>
+    """
+
+    extras_html = f"""
+    <div style="margin: 20px 0 10px 0;">
+        <h3 style="color: #2d2030; font-size: 16px; margin: 0 0 14px 0; border-bottom: 2px solid #fae6f2; padding-bottom: 8px;">
+            ✨ Selecciona un artículo para calificar:
+        </h3>
+        {bloque_items_html}
+    </div>
+    <div style="background-color: #fff8eb; border: 1px dashed #ffd166; border-radius: 10px; padding: 12px 16px; margin-top: 18px; font-size: 13px; color: #7a5400;">
+        💡 <em>Tu opinión ayuda a miles de fanáticos del mundo kawaii a elegir sus favoritos. ¡Además puedes subir una fotografía real de cómo luce tu compra!</em>
+    </div>
+    """
+
+    asunto = f"⭐ ¿Qué te pareció tu pedido {pedido.codigo_pedido}? ¡Nos encantaría tu opinión! | Sorpresas Kawaii"
+
+    cuerpo_html = _construir_plantilla_base_html(
+        titulo_banner="¡Queremos conocer tu experiencia! ⭐💖",
+        encabezado="¡Esperamos que estés disfrutando de tus productos kawaii!",
+        cuerpo_principal=(
+            "Hace unos días recibiste tu pedido y esperamos con todo el corazón que haya llenado tus días de ternura y magia. "
+            "¿Nos regalarías un minuto para contarnos qué tal te pareció tu compra? Tu opinión sincera es sumamente valiosa para nosotros y para toda la comunidad."
+        ),
+        pedido=pedido,
+        extras_html=extras_html
+    )
+
+    # Texto plano alternativo
+    lineas_plano = [
+        f"¡Hola {cliente}!",
+        "",
+        f"Hace unos días recibiste tu pedido {pedido.codigo_pedido} en Sorpresas Kawaii.",
+        "Esperamos que estés disfrutando al máximo de cada uno de tus productos ✨",
+        "",
+        "Nos encantaría conocer tu experiencia y opinión sincera para seguir mejorando y ayudar a otros clientes kawaii.",
+        "",
+        "Puedes calificar tus artículos directamente en los siguientes enlaces:"
+    ]
+    for it in items_calificables:
+        lineas_plano.append(f"- {it['nombre']}: {it['url']}")
+
+    lineas_plano.extend([
+        "",
+        f"O ingresa a tu sección de Mis Pedidos: {url_mis_pedidos}",
+        "",
+        "¡Muchísimas gracias por formar parte de Sorpresas Kawaii! 💖",
+        "El equipo de Sorpresas Kawaii ✨"
+    ])
+    mensaje_plano = "\n".join(lineas_plano)
+
+    try:
+        send_mail(
+            subject=asunto,
+            message=mensaje_plano,
+            html_message=cuerpo_html,
+            from_email=settings.DEFAULT_FROM_EMAIL or 'noreply@sorpresaskawaii.com',
+            recipient_list=[pedido.id_usuario.email],
+            fail_silently=True,
+        )
+        return True
+    except Exception:
+        return False
+
+
+def enviar_correos_recordatorios_calificacion_pendientes(dias=3, dry_run=False):
+    """
+    Busca todas las órdenes que fueron marcadas como ENTREGADO hace al menos `dias` días
+    (por defecto 3 días) y a las cuales aún no se les haya enviado la invitación de calificación.
+
+    Retorna un diccionario con estadísticas de ejecución:
+    {
+        'total_encontrados': int,
+        'total_enviados': int,
+        'pedidos_procesados': list[str], # Códigos de pedido
+        'dry_run': bool
+    }
+    """
+    from datetime import timedelta
+    from django.utils import timezone
+    from .models import Pedido
+
+    ahora = timezone.now()
+    fecha_limite = ahora - timedelta(days=dias)
+
+    pedidos_candidatos = Pedido.objects.filter(
+        estado='ENTREGADO',
+        fecha_entrega__isnull=False,
+        fecha_entrega__lte=fecha_limite,
+        correo_invitacion_calificar_enviado=False
+    ).select_related('id_usuario').prefetch_related('detalles__producto', 'detalles__combo')
+
+    total_encontrados = pedidos_candidatos.count()
+    total_enviados = 0
+    pedidos_procesados = []
+
+    if dry_run:
+        for p in pedidos_candidatos:
+            pedidos_procesados.append(p.codigo_pedido)
+        return {
+            'total_encontrados': total_encontrados,
+            'total_enviados': 0,
+            'pedidos_procesados': pedidos_procesados,
+            'dry_run': True
+        }
+
+    for p in pedidos_candidatos:
+        enviado = enviar_correo_invitacion_calificar(p)
+        if enviado:
+            p.correo_invitacion_calificar_enviado = True
+            p.save(update_fields=['correo_invitacion_calificar_enviado'])
+            total_enviados += 1
+            pedidos_procesados.append(p.codigo_pedido)
+
+    return {
+        'total_encontrados': total_encontrados,
+        'total_enviados': total_enviados,
+        'pedidos_procesados': pedidos_procesados,
+        'dry_run': False
+    }
+

@@ -92,22 +92,42 @@
                                     <span class="item-subtotal-tag">Subtotal: <strong>${% widthratio detalle.precio_item 1 detalle.cantidad %} COP</strong></span>
                                 </div>
 
-                                <!-- Botón Comprar Nuevamente -->
-                                {% if detalle.producto %}
-                                <form method="post" action="{% url 'agregar_a_carrito' detalle.producto.id %}" class="form-buy-again">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn-buy-again" title="Agregar este producto al carrito">
-                                        <i class="fa-solid fa-rotate-right"></i> Comprar nuevamente
-                                    </button>
-                                </form>
-                                {% elif detalle.combo %}
-                                <form method="post" action="{% url 'agregar_combo_a_carrito' detalle.combo.id %}" class="form-buy-again">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn-buy-again" title="Agregar este combo al carrito">
-                                        <i class="fa-solid fa-rotate-right"></i> Comprar nuevamente
-                                    </button>
-                                </form>
-                                {% endif %}
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; align-items: center;">
+                                    <!-- Botón Comprar Nuevamente -->
+                                    {% if detalle.producto %}
+                                    <form method="post" action="{% url 'agregar_a_carrito' detalle.producto.id %}" class="form-buy-again" style="margin: 0;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-buy-again" title="Agregar este producto al carrito">
+                                            <i class="fa-solid fa-rotate-right"></i> Comprar nuevamente
+                                        </button>
+                                    </form>
+                                    {% if pedido.estado == 'ENVIADO' or pedido.estado == 'ENTREGADO' %}
+                                    <a href="{% url 'detalle_producto' detalle.producto.id %}#escribir-resena" class="btn-review-order" title="Calificar producto">
+                                        <i class="fa-solid fa-star" style="color: #ffb800;"></i> Calificar
+                                    </a>
+                                    {% elif pedido.estado == 'PAGADO' %}
+                                    <span style="font-size: 0.8rem; color: #7a3ee6; background: #f6f0ff; border: 1px solid #e5d6fa; border-radius: 20px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 5px;" title="Podrás calificar en cuanto tu pedido sea enviado">
+                                        <i class="fa-solid fa-clock"></i> En preparación (calificación al enviar)
+                                    </span>
+                                    {% endif %}
+                                    {% elif detalle.combo %}
+                                    <form method="post" action="{% url 'agregar_combo_a_carrito' detalle.combo.id %}" class="form-buy-again" style="margin: 0;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-buy-again" title="Agregar este combo al carrito">
+                                            <i class="fa-solid fa-rotate-right"></i> Comprar nuevamente
+                                        </button>
+                                    </form>
+                                    {% if pedido.estado == 'ENVIADO' or pedido.estado == 'ENTREGADO' %}
+                                    <a href="{% url 'detalle_combo' detalle.combo.id %}#escribir-resena" class="btn-review-order" title="Calificar combo">
+                                        <i class="fa-solid fa-star" style="color: #ffb800;"></i> Calificar
+                                    </a>
+                                    {% elif pedido.estado == 'PAGADO' %}
+                                    <span style="font-size: 0.8rem; color: #7a3ee6; background: #f6f0ff; border: 1px solid #e5d6fa; border-radius: 20px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 5px;" title="Podrás calificar en cuanto tu pedido sea enviado">
+                                        <i class="fa-solid fa-clock"></i> En preparación (calificación al enviar)
+                                    </span>
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                         {% empty %}

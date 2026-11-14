@@ -1,0 +1,471 @@
+{% extends "base.html" %}
+{% load static %}
+{% load carrito_filters %}
+
+{% block title %}{{ producto.nombre }} · Sorpresas Kawaii{% endblock %}
+
+{% block content %}
+<div class="product-detail-container">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb-nav">
+        <a href="{% url 'inicio' %}"><i class="fa-solid fa-house"></i> Inicio</a>
+        <span>/</span>
+        <a href="{% url 'lista_productos' %}">Productos</a>
+        {% if producto.id_categoria %}
+            <span>/</span>
+            <a href="{% url 'lista_productos' %}?categoria={{ producto.id_categoria.nombre }}">{{ producto.id_categoria.nombre }}</a>
+        {% endif %}
+        <span>/</span>
+        <span class="active">{{ producto.nombre }}</span>
+    </nav>
+
+    <!-- Ficha Principal de Compra -->
+    <div class="product-hero-card">
+        <!-- Galería de Imagen -->
+        <div class="product-gallery">
+            <div class="main-image-wrap">
+                {% if producto.get_imagen_url %}
+                    <img src="{{ producto.get_imagen_url }}" alt="{{ producto.nombre }}" class="main-product-img" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                {% else %}
+                    <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen" class="main-product-img">
+                {% endif %}
+
+                {% if producto.es_nuevo %}
+                    <span class="badge-nuevo" style="position: absolute; top: 16px; left: 16px; z-index: 2;">✨ Novedad</span>
+                {% endif %}
+
+                {% if producto.descuento_porcentaje > 0 %}
+                    <span class="discount-badge" style="position: absolute; top: 16px; right: 16px; z-index: 2; font-size: 0.95rem; padding: 6px 14px;">
+                        {{ producto.descuento_porcentaje|floatformat:0 }}% OFF
+                    </span>
+                {% endif %}
+
+                <!-- Botón de Favorito Flotante -->
+                {% if user.is_authenticated %}
+                <button type="button" class="btn-wishlist-hero {% if es_favorito %}active{% endif %}" onclick="toggleWishlist('producto', '{{ producto.id }}', this)" title="Guardar en favoritos">
+                    <i class="fa-{% if es_favorito %}solid{% else %}regular{% endif %} fa-heart"></i>
+                </button>
+                {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="btn-wishlist-hero" title="Inicia sesión para guardar en favoritos">
+                    <i class="fa-regular fa-heart"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Información y Checkout -->
+        <div class="product-info-panel">
+            {% if producto.id_categoria %}
+                <div class="category-pill">{{ producto.id_categoria.nombre }}</div>
+            {% endif %}
+
+            <h1 class="product-title">{{ producto.nombre }}</h1>
+
+            <!-- Resumen de Valoración con Enlace -->
+            <div class="detail-stars-summary">
+                <div class="stars-gold">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= producto.estrellas_enteras %}
+                            <i class="fa-solid fa-star"></i>
+                        {% elif forloop.counter == producto.estrellas_enteras|add:1 and producto.tiene_media_estrella %}
+                            <i class="fa-solid fa-star-half-stroke"></i>
+                        {% else %}
+                            <i class="fa-regular fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <span class="rating-number">{{ producto.promedio_calificacion }}</span>
+                <span class="rating-divider">·</span>
+                <a href="#seccion-resenas" class="rating-reviews-link">{{ total_resenas }} opiniones de clientes</a>
+            </div>
+
+            <!-- Bloque de Precios -->
+            <div class="detail-pricing-box">
+                {% if producto.descuento_porcentaje > 0 %}
+                    <div class="orig-price-wrap">
+                        <span class="orig-label">Precio habitual:</span>
+                        <span class="orig-value">${{ producto.valor_unitario|floatformat:0 }} COP</span>
+                    </div>
+                    <div class="final-price-wrap">
+                        <span class="final-price">${{ producto.precio_final|floatformat:0 }} COP</span>
+                        <span class="save-tag">Ahorras ${{ producto.valor_unitario|subtract:producto.precio_final|floatformat:0 }} COP</span>
+                    </div>
+                {% else %}
+                    <div class="final-price-wrap">
+                        <span class="final-price">${{ producto.valor_unitario|floatformat:0 }} COP</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Estado de Stock -->
+            <div class="stock-status-row">
+                {% if not producto.activo %}
+                    <span class="stock-tag out-of-stock" style="background: #f4ecf7; color: #7a3ee6;"><i class="fa-solid fa-circle-pause"></i> Producto no disponible para nuevas ventas</span>
+                {% elif producto.stock > 0 %}
+                    <span class="stock-tag in-stock"><i class="fa-solid fa-circle-check"></i> Disponible en inventario ({{ producto.stock }} unidades)</span>
+                {% else %}
+                    <span class="stock-tag out-of-stock"><i class="fa-solid fa-circle-xmark"></i> Agotado por el momento</span>
+                {% endif %}
+            </div>
+
+            <!-- Descripción -->
+            <div class="product-description-text">
+                <p>{{ producto.descripcion|default:"Artículo kawaii de papelería estética importada, elaborado con los más tiernos detalles y materiales de alta calidad."|linebreaksbr }}</p>
+            </div>
+
+            <!-- Botones de Acción / Carrito -->
+            <div class="detail-actions-box">
+                {% if producto.activo and producto.stock > 0 %}
+                    <form method="post" action="{% url 'agregar_a_carrito' producto.id %}" class="detail-add-form">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-detail-add-cart">
+                            <i class="fa-solid fa-cart-shopping"></i> Agregar al Carrito
+                        </button>
+                    </form>
+                {% elif not producto.activo %}
+                    <button type="button" class="btn-detail-add-cart disabled" disabled style="background: #a99bb0; cursor: not-allowed; box-shadow: none;">
+                        <i class="fa-solid fa-ban"></i> No disponible para compra
+                    </button>
+                {% else %}
+                    <button type="button" class="btn-detail-add-cart disabled" disabled>
+                        <i class="fa-solid fa-bell"></i> Producto Agotado
+                    </button>
+                {% endif %}
+
+                {% if user.is_authenticated %}
+                <button type="button" class="btn-detail-wishlist {% if es_favorito %}active{% endif %}" onclick="toggleWishlist('producto', '{{ producto.id }}', this)">
+                    <i class="fa-{% if es_favorito %}solid{% else %}regular{% endif %} fa-heart"></i>
+                    <span>{% if es_favorito %}En Favoritos{% else %}Guardar en Favoritos{% endif %}</span>
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Insignias de Confianza -->
+            <div class="trust-perks-grid">
+                <div class="trust-perk-item">
+                    <i class="fa-solid fa-truck-fast"></i>
+                    <div>
+                        <strong>Despacho Nacional</strong>
+                        <span>Envíos rápidos a toda Colombia</span>
+                    </div>
+                </div>
+                <div class="trust-perk-item">
+                    <i class="fa-brands fa-whatsapp"></i>
+                    <div>
+                        <strong>Cierre Asistido</strong>
+                        <span>Atención directa por WhatsApp</span>
+                    </div>
+                </div>
+                <div class="trust-perk-item">
+                    <i class="fa-solid fa-shield-heart"></i>
+                    <div>
+                        <strong>Empaque Mágico</strong>
+                        <span>Detalles y regalitos sorpresa</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN DE RESEÑAS Y OPINIONES -->
+    <section id="seccion-resenas" class="reviews-section-card">
+        <div class="reviews-header-bar">
+            <div>
+                <span class="reviews-pill-tag">⭐ VALORACIONES REALES</span>
+                <h2>Opiniones de Clientes</h2>
+            </div>
+            {% if usuario_compro or user.is_staff %}
+            <a href="#escribir-resena" class="btn-write-review-jump">
+                <i class="fa-solid fa-pen-fancy"></i> {% if mi_resena %}Editar mi reseña{% else %}Dejar mi opinión{% endif %}
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Resumen Estadístico de Calificación -->
+        <div class="reviews-analytics-grid">
+            <div class="analytics-overall">
+                <div class="big-score">{{ producto.promedio_calificacion }}</div>
+                <div class="stars-gold-lg">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= producto.estrellas_enteras %}
+                            <i class="fa-solid fa-star"></i>
+                        {% elif forloop.counter == producto.estrellas_enteras|add:1 and producto.tiene_media_estrella %}
+                            <i class="fa-solid fa-star-half-stroke"></i>
+                        {% else %}
+                            <i class="fa-regular fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <p class="score-sub">Basado en {{ total_resenas }} valoración(es)</p>
+            </div>
+
+            <div class="analytics-bars">
+                {% for item in desglose_calificaciones %}
+                <div class="bar-row">
+                    <span class="bar-star-label">{{ item.estrellas }} <i class="fa-solid fa-star" style="color: #ffb800; font-size: 0.8rem;"></i></span>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width: {{ item.porcentaje }}%;"></div>
+                    </div>
+                    <span class="bar-count-label">{{ item.conteo }} ({{ item.porcentaje }}%)</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="analytics-incentive">
+                <div class="incentive-icon">💖✨</div>
+                <h4>¡Tu opinión es valiosa! ✨</h4>
+                <p>Comparte qué tal te pareció tu producto o experiencia y ayuda a la comunidad kawaii a conocer los detalles reales.</p>
+            </div>
+        </div>
+
+        <!-- Formulario para Publicar Reseña (Solo para compradores verificados con pedido enviado o entregado) -->
+        {% if usuario_compro or user.is_staff %}
+        <div id="escribir-resena" class="write-review-box">
+            <h3>{% if mi_resena %}Editar mi reseña{% else %}Califica tu experiencia con este producto{% endif %}</h3>
+            
+            <div style="margin-bottom: 16px; background: #eafbf3; border: 1px solid #b7eed3; border-radius: 12px; padding: 10px 14px; font-size: 0.88rem; color: #0d8a68; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-circle-check" style="font-size: 1.1rem;"></i>
+                <span><strong>Compra Verificada:</strong> Tu pedido ha sido enviado o entregado. ¡Comparte tu experiencia real con la comunidad!</span>
+            </div>
+
+            <form method="post" action="{% url 'crear_resena' 'producto' producto.id %}" enctype="multipart/form-data" class="review-form">
+            {% csrf_token %}
+
+            <!-- Selector de Estrellas Interactivo -->
+            <div class="form-group-rating">
+                <label>Tu Calificación:</label>
+                <div class="star-rating-picker" id="starPicker">
+                    <input type="radio" id="star5" name="calificacion" value="5" {% if mi_resena.calificacion == 5 or not mi_resena %}checked{% endif %}>
+                    <label for="star5" title="5 estrellas - ¡Excelente!">★</label>
+
+                    <input type="radio" id="star4" name="calificacion" value="4" {% if mi_resena.calificacion == 4 %}checked{% endif %}>
+                    <label for="star4" title="4 estrellas - Muy bueno">★</label>
+
+                    <input type="radio" id="star3" name="calificacion" value="3" {% if mi_resena.calificacion == 3 %}checked{% endif %}>
+                    <label for="star3" title="3 estrellas - Bueno">★</label>
+
+                    <input type="radio" id="star2" name="calificacion" value="2" {% if mi_resena.calificacion == 2 %}checked{% endif %}>
+                    <label for="star2" title="2 estrellas - Regular">★</label>
+
+                    <input type="radio" id="star1" name="calificacion" value="1" {% if mi_resena.calificacion == 1 %}checked{% endif %}>
+                    <label for="star1" title="1 estrella - Malo">★</label>
+                </div>
+            </div>
+
+            <div class="form-group-field">
+                <label for="review_titulo">Título breve (opcional):</label>
+                <input type="text" id="review_titulo" name="titulo" class="kawaii-input" placeholder="Ej: ¡Me encantó el detalle y empaque!" value="{{ mi_resena.titulo|default:'' }}">
+            </div>
+
+            <div class="form-group-field">
+                <label for="review_comentario">Tu opinión y experiencia:*</label>
+                <textarea id="review_comentario" name="comentario" rows="3" class="kawaii-textarea" placeholder="Cuéntanos qué tal te pareció el material, colores, presentación o la experiencia de compra..." required>{{ mi_resena.comentario|default:'' }}</textarea>
+            </div>
+
+            <div class="form-group-field">
+                <label for="review_foto"><i class="fa-solid fa-camera"></i> Subir foto real de tu pedido (opcional):</label>
+                <input type="file" id="review_foto" name="foto" accept="image/*" class="kawaii-file-input">
+                {% if mi_resena.foto %}
+                    <small class="file-note">Ya tienes una foto cargada: <a href="{{ mi_resena.foto.url }}" target="_blank">Ver foto actual</a></small>
+                {% endif %}
+            </div>
+
+            <div class="form-submit-row">
+                <button type="submit" class="btn-submit-review">
+                    <i class="fa-solid fa-paper-plane"></i> {% if mi_resena %}Actualizar Reseña{% else %}Publicar Reseña{% endif %}
+                </button>
+            </div>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Listado de Reseñas de Clientes -->
+        <div class="reviews-list-wrap">
+            <h3>Comentarios de este producto ({{ total_resenas }})</h3>
+
+            {% if resenas %}
+                <div class="reviews-cards-stream">
+                    {% for r in resenas %}
+                    <article class="review-item-card">
+                        <div class="review-top-bar">
+                            <div class="reviewer-meta">
+                                <div class="reviewer-avatar">
+                                    {{ r.nombre_publico_usuario|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <h4 class="reviewer-name">{{ r.nombre_publico_usuario }}</h4>
+                                    <span class="review-date">{{ r.fecha_creacion|date:"d M Y" }}</span>
+                                </div>
+                            </div>
+
+                            {% if r.compra_verificada %}
+                                <span class="verified-badge" title="Este usuario realizó una compra confirmada de este artículo">
+                                    <i class="fa-solid fa-circle-check"></i> Compra Verificada
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Estrellas de esta reseña -->
+                        <div class="review-stars-row">
+                            <div class="stars-gold">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= r.calificacion %}
+                                        <i class="fa-solid fa-star"></i>
+                                    {% else %}
+                                        <i class="fa-regular fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% if r.titulo %}
+                                <strong class="review-card-title">{{ r.titulo }}</strong>
+                            {% endif %}
+                        </div>
+
+                        <p class="review-text-content">{{ r.comentario|linebreaksbr }}</p>
+
+                        <!-- Foto adjunta por el cliente (abre en ventana modal) -->
+                        {% if r.foto %}
+                        <div class="review-photo-wrap" style="margin-top: 10px;">
+                            <div role="button" tabindex="0" class="btn-review-thumb-modal" onclick="abrirModalFoto('{{ r.foto.url|escapejs }}', 'Foto compartida por {{ r.nombre_publico_usuario|escapejs }}')" onkeydown="if(event.key==='Enter'||event.key===' ')abrirModalFoto('{{ r.foto.url|escapejs }}', 'Foto compartida por {{ r.nombre_publico_usuario|escapejs }}')" title="Haz clic para ampliar la foto" style="cursor: pointer; display: inline-block; position: relative;">
+                                <img src="{{ r.foto.url }}" alt="Foto de cliente para {{ producto.nombre }}" class="review-customer-thumbnail" style="cursor: pointer; width: 85px; height: 85px; object-fit: cover; border-radius: 12px; border: 2.5px solid #ffd1dc; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.08); transition: transform 0.2s ease;">
+                                <span class="thumb-zoom-icon" style="position: absolute; bottom: 5px; right: 5px; background: rgba(0,0,0,0.7); color: #fff; font-size: 10px; padding: 3px 6px; border-radius: 6px; pointer-events: none;"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-reviews-box">
+                    <p>Aún no hay opiniones escritas para este producto. ¡Sé la primera persona en calificarlo!</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Productos Relacionados -->
+    {% if relacionados %}
+    <section class="related-products-section">
+        <h2>También te podría encantar ✨</h2>
+        <div class="product-grid">
+            {% for rel in relacionados %}
+            <div class="product-card">
+                <div class="product-card-body">
+                    <div class="product-image">
+                        {% if rel.get_imagen_url %}
+                            <img src="{{ rel.get_imagen_url }}" alt="{{ rel.nombre }}" onerror="this.onerror=null; this.src='{% static 'img/placeholder.png' %}';">
+                        {% else %}
+                            <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'detalle_producto' rel.id %}" class="product-link">
+                        <p class="product-name">{{ rel.nombre }}</p>
+                    </a>
+                    <div class="price-container">
+                        <span class="product-price">${{ rel.precio_final|floatformat:0 }}</span>
+                    </div>
+                    <a href="{% url 'detalle_producto' rel.id %}" class="add-to-cart-button" style="text-decoration: none; text-align: center;">
+                        <i class="fa-solid fa-eye"></i> Ver Detalle
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+<!-- Script interactivo para Favoritos asíncronos -->
+<script>
+function toggleWishlist(tipo, itemId, btnElement) {
+    const url = `/favoritos/toggle/${tipo}/${itemId}/?format=json`;
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            const icon = btnElement.querySelector('i');
+            const span = btnElement.querySelector('span');
+            if (data.agregado) {
+                btnElement.classList.add('active');
+                if (icon) { icon.classList.remove('fa-regular'); icon.classList.add('fa-solid'); }
+                if (span) { span.innerText = 'En Favoritos'; }
+            } else {
+                btnElement.classList.remove('active');
+                if (icon) { icon.classList.remove('fa-solid'); icon.classList.add('fa-regular'); }
+                if (span) { span.innerText = 'Guardar en Favoritos'; }
+            }
+
+            // Actualizar badge en navbar si existe
+            const navBadge = document.getElementById('nav-wishlist-badge');
+            if (navBadge) {
+                navBadge.innerText = data.total_deseos;
+                navBadge.style.display = data.total_deseos > 0 ? 'inline-flex' : 'none';
+            }
+        }
+    })
+    .catch(err => {
+        console.error('Error toggling wishlist:', err);
+    });
+}
+
+// Control de Ventana Modal para Fotografías de Reseñas
+window.abrirModalFoto = function(url, caption) {
+    try {
+        var modal = document.getElementById('modalFotoResena');
+        var img = document.getElementById('imgModalResena');
+        var cap = document.getElementById('captionModalResena');
+        if (modal && img) {
+            img.src = url;
+            if (cap) cap.innerText = caption || '';
+            modal.style.setProperty('display', 'flex', 'important');
+            document.body.style.overflow = 'hidden';
+            return;
+        }
+    } catch (err) {
+        console.error('Error al abrir modal de foto:', err);
+    }
+    if (url) {
+        window.open(url, '_blank');
+    }
+};
+
+window.cerrarModalFoto = function(e) {
+    if (e && e.target && e.target.id === 'modalFotoResena') {
+        window.cerrarModalFotoDirecto();
+    }
+};
+
+window.cerrarModalFotoDirecto = function() {
+    var modal = document.getElementById('modalFotoResena');
+    var img = document.getElementById('imgModalResena');
+    if (modal) {
+        modal.style.setProperty('display', 'none', 'important');
+        if (img) img.src = '';
+        document.body.style.overflow = '';
+    }
+};
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        window.cerrarModalFotoDirecto();
+    }
+});
+</script>
+
+<!-- Modal Lightbox para Ampliar Foto de Reseña -->
+<div id="modalFotoResena" class="review-modal-backdrop" onclick="cerrarModalFoto(event)" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; background: rgba(15, 8, 20, 0.88); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 99999999; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
+    <div class="review-modal-content" onclick="event.stopPropagation()" style="position: relative; max-width: 90vw; max-height: 90vh; background: #ffffff; border-radius: 18px; padding: 14px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; align-items: center; box-sizing: border-box;">
+        <button type="button" class="review-modal-close" onclick="cerrarModalFotoDirecto()" title="Cerrar ventana" style="position: absolute; top: -14px; right: -14px; width: 36px; height: 36px; background: linear-gradient(135deg, #ff70af 0%, #e94fa3 100%); color: #ffffff; border: 2.5px solid #ffffff; border-radius: 50%; font-size: 24px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35); z-index: 100; line-height: 1;">&times;</button>
+        <img id="imgModalResena" src="" alt="Fotografía de reseña" class="review-modal-img" style="max-width: 82vw; max-height: 76vh; object-fit: contain; border-radius: 12px; display: block; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+        <p id="captionModalResena" class="review-modal-caption" style="margin: 10px 0 2px 0; font-size: 0.95rem; color: #4a3e4e; font-weight: 600; text-align: center; font-family: 'Poppins', sans-serif;"></p>
+    </div>
+</div>
+{% endblock content %}
+

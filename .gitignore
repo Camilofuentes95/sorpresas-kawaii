@@ -74,6 +74,8 @@ config.json
 staticfiles/
 
 # Archivos multimedia subidos por los usuarios (MEDIA_ROOT)
+media/resenas/*
+!media/resenas/.gitkeep
 # Se incluyen imágenes iniciales del catálogo
 !/media/productos/*
 !/media/combos/*

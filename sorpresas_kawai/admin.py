@@ -2,7 +2,8 @@ from django.contrib import admin
 from .models import (
     Categoria, Producto, Combo, CombosProductos,
     Pedido, DetallePedido, UserProfile, CarritoDeCompras, ItemCarrito,
-    ConfiguracionTienda, Sorpresa
+    ConfiguracionTienda, Sorpresa,
+    ListaDeseos, Resena
 )
 
 admin.site.register(Categoria)
@@ -116,13 +117,13 @@ class DetallePedidoInline(admin.TabularInline):
 @admin.register(Pedido)
 class PedidoAdmin(admin.ModelAdmin):
     change_list_template = 'admin/sorpresas_kawai/pedido/change_list.html'
-    list_display = ('id_corto', 'id_usuario', 'fecha_pedido', 'valor_pagado', 'estado', 'empresa_envio', 'numero_guia', 'tiene_comprobante')
+    list_display = ('id_corto', 'id_usuario', 'fecha_pedido', 'valor_pagado', 'estado', 'empresa_envio', 'numero_guia', 'tiene_comprobante', 'fecha_entrega', 'correo_invitacion_calificar_enviado')
     list_editable = ('estado', 'empresa_envio', 'numero_guia')
-    list_filter = ('estado', 'fecha_pedido')
+    list_filter = ('estado', 'fecha_pedido', 'correo_invitacion_calificar_enviado', 'fecha_entrega')
     search_fields = ('id', 'id_usuario__username', 'id_usuario__email', 'numero_guia', 'empresa_envio')
     ordering = ('-fecha_pedido',)
     inlines = [DetallePedidoInline]
-    actions = ['exportar_pedidos_seleccionados_excel']
+    actions = ['exportar_pedidos_seleccionados_excel', 'enviar_invitacion_calificacion_action']
     fieldsets = (
         ('Información del Pedido', {
             'fields': ('id_usuario', 'estado', 'valor_pagado', 'metodo_pago', 'detalle_pago'),
@@ -135,6 +136,10 @@ class PedidoAdmin(admin.ModelAdmin):
             'fields': ('empresa_envio', 'numero_guia'),
             'description': 'Completa estos campos cuando el pedido esté enviado para que el cliente pueda ver su guía en "Mis Pedidos".'
         }),
+        ('Seguimiento de Entrega y Calificación', {
+            'fields': ('fecha_entrega', 'correo_invitacion_calificar_enviado'),
+            'description': 'Fecha registrada al pasar a ENTREGADO y control del correo de invitación a calificar (enviado automáticamente 3 días después).'
+        }),
     )
 
     def id_corto(self, obj):
@@ -145,6 +150,29 @@ class PedidoAdmin(admin.ModelAdmin):
         return bool(obj.comprobante_pago)
     tiene_comprobante.boolean = True
     tiene_comprobante.short_description = "Comprobante"
+
+    @admin.action(description="📧 Enviar correo de invitación a calificar (pedidos entregados)")
+    def enviar_invitacion_calificacion_action(self, request, queryset):
+        from .emails import enviar_correo_invitacion_calificar
+        enviados = 0
+        omitidos = 0
+        for pedido in queryset:
+            if pedido.estado == 'ENTREGADO':
+                if enviar_correo_invitacion_calificar(pedido):
+                    pedido.correo_invitacion_calificar_enviado = True
+                    pedido.save(update_fields=['correo_invitacion_calificar_enviado'])
+                    enviados += 1
+            else:
+                omitidos += 1
+
+        if enviados > 0:
+            self.message_user(request, f"¡Se despacharon {enviados} invitaciones de calificación con éxito! ✨")
+        if omitidos > 0:
+            self.message_user(
+                request,
+                f"Se omitieron {omitidos} pedido(s) porque no están en estado ENTREGADO.",
+                level='warning'
+            )
 
     @admin.action(description="📥 Descargar pedidos seleccionados en Excel (.xlsx)")
     def exportar_pedidos_seleccionados_excel(self, request, queryset):
@@ -303,3 +331,60 @@ class ConfiguracionTiendaAdmin(admin.ModelAdmin):
         # Evita borrar la configuración principal
         return False
 
+
+
+# =============================================================================
+# ADMIN: RESEÑAS Y LISTA DE DESEOS
+# =============================================================================
+
+@admin.register(ListaDeseos)
+class ListaDeseosAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'item_nombre', 'tipo_item', 'fecha_agregado')
+    list_filter = ('fecha_agregado',)
+    search_fields = ('usuario__username', 'producto__nombre', 'combo__nombre')
+    ordering = ('-fecha_agregado',)
+
+    def item_nombre(self, obj):
+        return obj.producto.nombre if obj.producto else (obj.combo.nombre if obj.combo else '-')
+    item_nombre.short_description = 'Artículo Favorito'
+
+    def tipo_item(self, obj):
+        return 'Producto' if obj.producto else ('Combo' if obj.combo else '-')
+    tipo_item.short_description = 'Tipo'
+
+
+@admin.register(Resena)
+class ResenaAdmin(admin.ModelAdmin):
+    list_display = ('id_corto', 'usuario', 'item_evaluado', 'calificacion_estrellas', 'compra_verificada', 'aprobado', 'tiene_foto', 'fecha_creacion')
+    list_filter = ('calificacion', 'compra_verificada', 'aprobado', 'fecha_creacion')
+    list_editable = ('aprobado',)
+    search_fields = ('usuario__username', 'titulo', 'comentario', 'producto__nombre', 'combo__nombre')
+    ordering = ('-fecha_creacion',)
+    actions = ['aprobar_resenas_action', 'desaprobar_resenas_action']
+
+    def id_corto(self, obj):
+        return f'#{str(obj.id)[:6].upper()}'
+    id_corto.short_description = 'ID'
+
+    def item_evaluado(self, obj):
+        return obj.producto.nombre if obj.producto else (obj.combo.nombre if obj.combo else '-')
+    item_evaluado.short_description = 'Artículo'
+
+    def calificacion_estrellas(self, obj):
+        return '★' * obj.calificacion + '☆' * (5 - obj.calificacion)
+    calificacion_estrellas.short_description = 'Calificación'
+
+    def tiene_foto(self, obj):
+        return bool(obj.foto)
+    tiene_foto.boolean = True
+    tiene_foto.short_description = 'Foto'
+
+    @admin.action(description='✅ Aprobar reseñas seleccionadas')
+    def aprobar_resenas_action(self, request, queryset):
+        filas = queryset.update(aprobado=True)
+        self.message_user(request, f'Se aprobaron {filas} reseña(s) correctamente.')
+
+    @admin.action(description='🚫 Ocultar reseñas seleccionadas')
+    def desaprobar_resenas_action(self, request, queryset):
+        filas = queryset.update(aprobado=False)
+        self.message_user(request, f'Se desaprobaron {filas} reseña(s).')
