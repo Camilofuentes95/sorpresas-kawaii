@@ -995,9 +995,9 @@ class Resena(models.Model):
     @property
     def nombre_publico_usuario(self):
         """
-        Retorna el nombre publico del cliente para comentarios protegiendo su privacidad
-        y evitando mostrar direcciones de correo electronico en la tienda virtual.
-        Ejemplo: 'Laura M.' o 'Carlos Perez'.
+        Retorna el nombre publico del cliente para comentarios.
+        Muestra su nombre y apellido completos sin censura.
+        Ejemplo: 'Camilo Fuentes' o 'Laura Moreno'.
         """
         if not self.usuario:
             return "Cliente Kawaii"
@@ -1006,17 +1006,16 @@ class Resena(models.Model):
         apellido = (self.usuario.last_name or '').strip()
 
         if nombre and apellido:
-            return f"{nombre} {apellido[0].upper()}."
+            return f"{nombre} {apellido}"
         elif nombre:
             return nombre
+        elif apellido:
+            return apellido
 
         raw = (self.usuario.username or '').strip()
         if '@' in raw:
-            # Si el username historico es un correo, ocultar la direccion por seguridad
-            prefijo = raw.split('@')[0]
-            if len(prefijo) > 2:
-                return f"{prefijo[:2].capitalize()}***"
-            return "Cliente Verificado"
+            # Si el username historico era un correo, mostrar el identificador sin dominio ni censura
+            return raw.split('@')[0]
         elif raw:
             return raw
 
