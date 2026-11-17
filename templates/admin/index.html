@@ -2,19 +2,31 @@
 {% load i18n static %}
 
 {% block content %}
-<!-- Tarjeta de Acceso Rápido a la Tienda Virtual -->
-<div class="admin-quick-header" style="margin-bottom: 22px; background: linear-gradient(135deg, #fff0f6 0%, #fdf2f8 100%); border: 1.5px solid #fbcfe8; padding: 18px 24px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; box-shadow: 0 4px 12px rgba(233, 79, 163, 0.08);">
-    <div style="display: flex; align-items: center; gap: 16px;">
-        <span style="font-size: 2.2rem; background: #fce7f3; width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);">🛍️</span>
-        <div>
-            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #9d174d; border: none; padding: 0;">Tienda Virtual Sorpresas Kawaii</h2>
-            <p style="margin: 4px 0 0; font-size: 0.9rem; color: #831843;">Explora el catálogo público, comprueba la experiencia de usuario y visualiza las novedades como cliente.</p>
-        </div>
-    </div>
-    <a href="{% url 'inicio' %}" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: #ffffff !important; padding: 10px 24px; border-radius: 50px; font-weight: 700; font-size: 0.95rem; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(219, 39, 119, 0.25); transition: transform 0.15s ease;">
-        <span>Ir a la Tienda</span>
-        <span style="font-size: 1.1rem; line-height: 1;">➔</span>
-    </a>
+<!-- Módulo Nativo: Acceso a la Tienda Virtual -->
+<div class="app-tienda module" style="margin-bottom: 20px;">
+    <table>
+        <caption>
+            <a href="{% url 'inicio' %}" class="section" title="Navegar en la Tienda Virtual">TIENDA VIRTUAL (VISTA DE CLIENTE)</a>
+        </caption>
+        <tbody>
+            <tr class="model-tienda-portada">
+                <th scope="row">
+                    <a href="{% url 'inicio' %}">🛍️ Ver Portada y Experiencia de Compra</a>
+                </th>
+                <td>
+                    <a href="{% url 'inicio' %}" class="viewlink">Ir a la Tienda</a>
+                </td>
+            </tr>
+            <tr class="model-tienda-catalogo">
+                <th scope="row">
+                    <a href="{% url 'lista_productos' %}">📦 Explorar Catálogo de Productos y Novedades</a>
+                </th>
+                <td>
+                    <a href="{% url 'lista_productos' %}" class="viewlink">Ver Catálogo</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </div>
 
 <div class="app-reportes module" style="margin-bottom: 20px;">
