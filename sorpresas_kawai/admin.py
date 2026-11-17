@@ -6,6 +6,12 @@ from .models import (
     ListaDeseos, Resena
 )
 
+# Personalización de marca y navegación del Panel de Administración
+admin.site.site_header = "Sorpresas Kawaii · Panel de Control"
+admin.site.site_title = "Admin Sorpresas Kawaii"
+admin.site.index_title = "Gestión Comercial y Operativa"
+admin.site.site_url = "/"
+
 admin.site.register(Categoria)
 admin.site.register(CombosProductos)
 admin.site.register(UserProfile)

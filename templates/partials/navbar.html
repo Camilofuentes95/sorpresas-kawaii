@@ -45,6 +45,14 @@
                     <span>Pedidos</span>
                 </a>
 
+                {% if user.is_staff %}
+                <!-- Acceso directo al Panel de Administración para administradores -->
+                <a href="{% url 'admin:index' %}" class="btn-nav-action btn-admin-nav" title="Ir al Panel de Administración">
+                    <i class="fa-solid fa-crown" style="color: #9333ea;"></i>
+                    <span>Panel Admin</span>
+                </a>
+                {% endif %}
+
                 <!-- Logout -->
                 <a href="{% url 'logout' %}" class="btn-nav-logout" title="Cerrar sesión">
                     <i class="fa-solid fa-right-from-bracket"></i>
